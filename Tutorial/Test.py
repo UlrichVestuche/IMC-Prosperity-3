@@ -112,7 +112,8 @@ class Trader:
             ## Filter and decay
             adverse_volume = 15
             beta = -0.257
-
+            
+            
 
             best_ask = min(order_depth.sell_orders.keys())
             best_bid = max(order_depth.buy_orders.keys())
@@ -162,7 +163,7 @@ class Trader:
         spread = 2
         insert = 1
        
-        fair_value = self.fair_value
+        fair_value = int(self.fair_value)
         
         #self.calculate_fair_price(self.order_depth)
 
