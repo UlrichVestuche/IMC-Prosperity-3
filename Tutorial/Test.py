@@ -36,16 +36,19 @@ class Trader:
         # Define a spread to determine acceptable price boundaries for trading decisions.
         spread = 2
         insert = 1
+        # take a integer value
+        fair_value = int(self.fair_value)
+
         # Determine the best ask available (baaf) that is above the fair value plus spread, or default to fair value if none exists
         if self.order_depth.sell_orders:
-            baaf = min([price for price in self.order_depth.sell_orders.keys() if price >= self.fair_value + spread])
+            baaf = min([price for price in self.order_depth.sell_orders.keys() if price >= fair_value + spread])
         else:
-            baaf = self.fair_value
+            baaf = fair_value
         # Determine the best bid available (bbbf) that is below the fair value minus spread, or default to fair value if none exists
         if self.order_depth.buy_orders:
-            bbbf = max([price for price in self.order_depth.buy_orders.keys() if price <= self.fair_value - spread])
+            bbbf = max([price for price in self.order_depth.buy_orders.keys() if price <= fair_value - spread])
         else:
-            bbbf = self.fair_value
+            bbbf = fair_value
 
         ## Calculate the remaining quantity that can be bought or sold based on current position and order volume
         buy_quantity = self.position_limit - (self.position + self.buy_order_volume)
@@ -56,7 +59,7 @@ class Trader:
         sell_quantity = self.position_limit + (self.position - self.sell_order_volume)
         if sell_quantity > 0:
             # Append a sell order. Adjust the sell price based on the best ask and a predefined offset
-            if baaf - insert == self.fair_value:
+            if baaf - insert == fair_value:
                 orders.append(Order("RAINFOREST_RESIN", baaf, -sell_quantity))
             else:
                 orders.append(Order("RAINFOREST_RESIN", baaf - insert, -sell_quantity))
@@ -165,12 +168,20 @@ class Trader:
 
         # Determine best ask for KELP
         if self.order_depth.sell_orders:
-            baaf = min([price for price in self.order_depth.sell_orders.keys() if price >= fair_value + spread])
+            sell_prices = [price for price in self.order_depth.sell_orders.keys() if price >= fair_value + spread]
+            if sell_prices:
+                baaf = min(sell_prices)
+            else:
+                baaf = fair_value
         else:
             baaf = fair_value
         # Determine best bid for KELP
         if self.order_depth.buy_orders:
-            bbbf = max([price for price in self.order_depth.buy_orders.keys() if price <= fair_value - spread])
+            buy_prices = [price for price in self.order_depth.buy_orders.keys() if price <= fair_value - spread]
+            if buy_prices:
+                bbbf = max(buy_prices)
+            else:
+                bbbf = fair_value
         else:
             bbbf = fair_value
 
@@ -206,7 +217,7 @@ class Trader:
         if "KELP" in state.order_depths:
             kelp_position = state.position["KELP"] if "KELP" in state.position else 0
             # Calculate fair price for KELP using the new function
-            fair_value_for_kelp = self.calculate_fair_price(state.order_depths["KELP"], traderObject)
+            fair_value_for_kelp = self.kelp_fair_value(state.order_depths["KELP"], traderObject)
             self.set_context(state.order_depths["KELP"], fair_value_for_kelp, 2, kelp_position, 50)
             kelp_orders = self.kelp_orders()
             result["KELP"] = kelp_orders
