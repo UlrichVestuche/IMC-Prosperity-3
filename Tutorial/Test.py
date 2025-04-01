@@ -111,7 +111,7 @@ class Trader:
             ### Declare them in class??
             ## Filter and decay
             adverse_volume = 15
-            beta = -0.257
+            beta = -0.15
             
             
 
@@ -207,14 +207,14 @@ class Trader:
         if state.traderData != None and state.traderData != "":
             traderObject = jsonpickle.decode(state.traderData)
         # Check if RAINFOREST_RESIN is available in the current market data
-        if "RAINFOREST_RESIN" in state.order_depths:
-            # Get current position for RAINFOREST_RESIN, defaulting to 0 if not present
-            resin_position = state.position["RAINFOREST_RESIN"] if "RAINFOREST_RESIN" in state.position else 0
-            # Set up the trading context with the latest market data and parameters
-            self.set_context(state.order_depths["RAINFOREST_RESIN"], 10000, 2, resin_position, 50)
-            # Generate trading orders for RAINFOREST_RESIN
-            resin_orders = self.resin_orders()
-            result["RAINFOREST_RESIN"] = resin_orders
+        # if "RAINFOREST_RESIN" in state.order_depths:
+        #     # Get current position for RAINFOREST_RESIN, defaulting to 0 if not present
+        #     resin_position = state.position["RAINFOREST_RESIN"] if "RAINFOREST_RESIN" in state.position else 0
+        #     # Set up the trading context with the latest market data and parameters
+        #     self.set_context(state.order_depths["RAINFOREST_RESIN"], 10000, 2, resin_position, 50)
+        #     # Generate trading orders for RAINFOREST_RESIN
+        #     #resin_orders = self.resin_orders()
+        #     #result["RAINFOREST_RESIN"] = resin_orders
         if "KELP" in state.order_depths:
             kelp_position = state.position["KELP"] if "KELP" in state.position else 0
             # Calculate fair price for KELP using the new function
