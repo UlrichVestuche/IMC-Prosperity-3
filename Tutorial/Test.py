@@ -266,7 +266,7 @@ class Trader:
     def kelp_orders(self) -> List[Order]:
         orders: List[Order] = []
         # Process market orders for KELP using the instrument parameter
-        # self.process_market_orders(orders, instrument="KELP")
+        self.process_market_orders(orders, instrument="KELP")
 
         # self.clear_position_order(orders)
         soft_position_limit = 10
@@ -305,10 +305,10 @@ class Trader:
         bid = bbbf + insert
 
         ## Let's to clean up slightly buy/sell slighlty higher/lower
-        if self.position > soft_position_limit:
-            ask -=1
-        elif self.position < -1 * soft_position_limit:
-            bid += 1
+        # if self.position > soft_position_limit:
+        #     ask -=1
+        # elif self.position < -1 * soft_position_limit:
+        #     bid += 1
 
         # Calculate quantities based on current position and order volumes
         buy_quantity = self.position_limit - (self.position + self.buy_order_volume)
