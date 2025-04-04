@@ -119,7 +119,7 @@ class Trader:
         self.buy_order_volume = 0
         self.sell_order_volume = 0
     
-    def set_context(self, order_depth: OrderDepth, fair_value: int, width: int, position: int, position_limit: int):
+    def set_context(self, order_depth: OrderDepth, fair_value: int, width: int, position: int, position_limit: int, product:string):
         # Set up the trading context using provided market data and internal state parameters.
         # This method initializes the order book, fair value, trading width, current position, and position limits.
         self.order_depth = order_depth
@@ -127,8 +127,11 @@ class Trader:
         self.width = width
         self.position = position
         self.position_limit = position_limit
+        self.product = product
         # Initialize order volumes for tracking how many units are bought or sold in market orders
         
+        self.buy_order_volume = 0
+        self.sell_order_volume = 0
 
     def resin_orders(self) -> List[Order]:
         # This method creates and returns a list of orders for trading RAINFOREST_RESIN.
@@ -176,17 +179,15 @@ class Trader:
     
     def process_market_orders(self, orders: List[Order], instrument: str = "RAINFOREST_RESIN") -> None:
         # Process sell orders: check each sell order in the order book
-        if len(self.order_depth.sell_orders) != 0:
-            for ask in self.order_depth.sell_orders.keys():
-                # Calculate the available sell quantity (negative value indicates sell orders)
-                ask_amount = -1 * self.order_depth.sell_orders[ask]
-                # If the ask price is lower than the fair value, consider buying
-                if ask < self.fair_value:
-                    # Determine how many units can be bought without exceeding the position limit
-                    quantity = min(ask_amount, self.position_limit - self.position - self.buy_order_volume)
-                    if quantity > 0:
-                        orders.append(Order(instrument, ask, quantity))
-                        self.buy_order_volume += quantity
+        if self.order_depth.sell_orders:
+            best_ask = min(self.order_depth.sell_orders.keys())
+            ask_amount = -self.order_depth.sell_orders[best_ask]
+            if best_ask < self.fair_value:
+                quantity = min(ask_amount, self.position_limit - self.position)
+                if quantity > 0:
+                    orders.append(Order(instrument, best_ask, quantity))
+                    self.buy_order_volume += quantity
+                    logger.print('I found good buy price:', best_ask, "fair:",self.fair_value)
         # Process buy orders: evaluate if the best bid is favorable
         if len(self.order_depth.buy_orders) != 0:
             best_bid = max(self.order_depth.buy_orders.keys())
@@ -198,19 +199,49 @@ class Trader:
                 if quantity > 0:
                     orders.append(Order(instrument, best_bid, -1 * quantity))
                     self.sell_order_volume += quantity
+                    logger.print('I found good sell price:', best_bid, "fair:", self.fair_value)
+        
 
     def clear_position_order(self, orders: List[Order]) -> None:
         # Adjust orders to clear or reduce positions if current positions exceed limits
         # Calculate the net position after processing market orders
         position_after_take = self.position + self.buy_order_volume - self.sell_order_volume
         # Round the fair value and determine floor/ceiling for bid/ask decisions
+        width = 1
         fair = round(self.fair_value)
-        fair_for_bid = math.floor(self.fair_value)
-        fair_for_ask = math.ceil(self.fair_value)
-
-        # Calculate how many more units can be bought or sold without exceeding limits
+        fair_for_bid = round(fair - width)
+        fair_for_ask = round(fair + width)
         buy_quantity = self.position_limit - (self.position + self.buy_order_volume)
         sell_quantity = self.position_limit + (self.position - self.sell_order_volume)
+        if position_after_take > 0:
+            # Aggregate volume from all buy orders with price greater than fair_for_ask
+            clear_quantity = sum(
+                volume
+                for price, volume in self.order_depth.buy_orders.items()
+                if price >= fair_for_ask
+            )
+            clear_quantity = min(clear_quantity, position_after_take)
+            sent_quantity = min(sell_quantity, clear_quantity)
+            if sent_quantity > 0:
+                orders.append(Order(self.product, fair_for_ask, -abs(sent_quantity)))
+                self.sell_order_volume += abs(sent_quantity)
+            logger.print('I tried clearing:',position_after_take,'with this price : ', fair_for_ask)
+
+        if position_after_take < 0:
+            # Aggregate volume from all sell orders with price lower than fair_for_bid
+            clear_quantity = sum(
+                abs(volume)
+                for price, volume in self.order_depth.sell_orders.items()
+                if price <= fair_for_bid
+            )
+            clear_quantity = min(clear_quantity, abs(position_after_take))
+            sent_quantity = min(buy_quantity, clear_quantity)
+            if sent_quantity > 0:
+                orders.append(Order(self.product, fair_for_bid, abs(sent_quantity)))
+                self.buy_order_volume += abs(sent_quantity)
+            logger.print('I tried clearing:',position_after_take,'with this price : ', fair_for_bid)
+
+        
 
         # NOTE: Additional logic to clear positions can be implemented here if needed
 
@@ -219,7 +250,7 @@ class Trader:
             ### Declare them in class??
             ## Filter and decay
             adverse_volume = 12
-            beta = -0.24
+            beta = -0.19
             
             
 
@@ -266,56 +297,81 @@ class Trader:
     def kelp_orders(self) -> List[Order]:
         orders: List[Order] = []
         # Process market orders for KELP using the instrument parameter
-        # self.process_market_orders(orders, instrument="KELP")
+        self.process_market_orders(orders, instrument="KELP")
 
-        # self.clear_position_order(orders)
-        soft_position_limit = 10
+        self.clear_position_order(orders)
+
+
+        soft_position_limit = 50
         spread = 2
         insert = 1
        
-        fair_value = int(self.fair_value)
+        fair_value = round(self.fair_value)
         
         #self.calculate_fair_price(self.order_depth)
+        asks_above_fair = [
+            price
+            for price in self.order_depth.sell_orders.keys()
+            if price >= fair_value + spread
+        ]
+        bids_below_fair = [
+            price
+            for price in self.order_depth.buy_orders.keys()
+            if price <= fair_value - spread
+        ]
 
+        best_ask_above_fair = min(asks_above_fair) if len(asks_above_fair) > 0 else None
+        best_bid_below_fair = max(bids_below_fair) if len(bids_below_fair) > 0 else None
+
+        ask = round(fair_value + spread)
+        if best_ask_above_fair != None:
+            ask = best_ask_above_fair - insert
+            # if abs(best_ask_above_fair - fair_value) <= join_edge:
+            #     ask = best_ask_above_fair  # join
+            # else:
+            #     ask = best_ask_above_fair - 1  # penny
+
+        bid = round(fair_value - spread)
+        if best_bid_below_fair != None:
+            bid = best_bid_below_fair + insert
+            # if abs(fair_value - best_bid_below_fair) <= join_edge:
+            #     bid = best_bid_below_fair
+            # else:
+            #     bid = best_bid_below_fair + 1
         # Determine best ask for KELP
-        if self.order_depth.sell_orders:
-            sell_prices = [price for price in self.order_depth.sell_orders.keys() if price >= fair_value + spread]
-            if sell_prices:
-                baaf = min(sell_prices)
-            else:
-                baaf = fair_value
-        else:
-            baaf = fair_value
-        # Determine best bid for KELP
-        if self.order_depth.buy_orders:
-            buy_prices = [price for price in self.order_depth.buy_orders.keys() if price <= fair_value - spread]
-            if buy_prices:
-                bbbf = max(buy_prices)
-            else:
-                bbbf = fair_value
-        else:
-            bbbf = fair_value
-
         
-        # if baaf - insert == fair_value:
-        #     ask =baaf
-        # else:
-        #     
-        ask = baaf-insert ##penny
-        bid = bbbf + insert
+
+       
+        
 
         ## Let's to clean up slightly buy/sell slighlty higher/lower
-        if self.position > soft_position_limit:
-            ask -=1
-        elif self.position < -1 * soft_position_limit:
-            bid += 1
+        # if self.position > soft_position_limit:
+        #     ask -=1
+        # elif self.position < -1 * soft_position_limit:
+        #     bid += 1
+        RecoverPosition = 3
+
 
         # Calculate quantities based on current position and order volumes
-        buy_quantity = self.position_limit - (self.position + self.buy_order_volume)
+
+        # if self.position > soft_position_limit:
+        #     buy_quantity = 0
+        #     #self.sell_order_volume +=  RecoverPosition
+        # else:
+        #     buy_quantity = self.position_limit - (self.position + self.buy_order_volume)
+        
+
+        # if self.position < -soft_position_limit:
+        #     sell_quantity = 0
+        #     #self.buy_order_volume += RecoverPosition
+        # else:
+        #     sell_quantity = self.position_limit + (self.position - self.sell_order_volume)
+
+
+        buy_quantity = soft_position_limit - (self.position + self.buy_order_volume)
+        sell_quantity = soft_position_limit + (self.position - self.sell_order_volume)
         if buy_quantity > 0:
             orders.append(Order("KELP", bid, buy_quantity))
-
-        sell_quantity = self.position_limit + (self.position - self.sell_order_volume)
         if sell_quantity > 0:
             orders.append(Order("KELP", ask, -sell_quantity))
 
@@ -327,6 +383,9 @@ class Trader:
         traderObject = {}
         if state.traderData != None and state.traderData != "":
             traderObject = jsonpickle.decode(state.traderData)
+
+
+
         # Check if RAINFOREST_RESIN is available in the current market data
         # if "RAINFOREST_RESIN" in state.order_depths:
         #     # Get current position for RAINFOREST_RESIN, defaulting to 0 if not present
@@ -336,13 +395,18 @@ class Trader:
         #     # Generate trading orders for RAINFOREST_RESIN
         #     #resin_orders = self.resin_orders()
         #     #result["RAINFOREST_RESIN"] = resin_orders
+
+
         if "KELP" in state.order_depths:
             kelp_position = state.position["KELP"] if "KELP" in state.position else 0
             # Calculate fair price for KELP using the new function
             fair_value_for_kelp = self.kelp_fair_value(state.order_depths["KELP"], traderObject)
-            self.set_context(state.order_depths["KELP"], fair_value_for_kelp, 2, kelp_position, 50)
+            self.set_context(state.order_depths["KELP"], fair_value_for_kelp, 2, kelp_position, 50, 'KELP')
             kelp_orders = self.kelp_orders()
             result["KELP"] = kelp_orders
+
+
+
         # traderData and conversions could be used for logging or further processing
         traderData = jsonpickle.encode(traderObject)
         conversions = 1
