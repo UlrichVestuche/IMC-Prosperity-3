@@ -27,36 +27,18 @@ class Trader:
     def kelp_window(self, state: TradingState):
         product = "KELP"
 
-        # window lengths
-        len_long = 50
-        len_short = 25
+        # window length
         len_mid = 4
-        # distance between window curves
-        spread_win = 1
 
         mid_price = self.kelp_mprice(state)
 
-        # Decode the dictionary with long and short windows
+        # Decode the dictionary with window
         if state.traderData:
             dct = jsonpickle.decode(state.traderData)
         else:
-            dct = {'mid': [], 'long': [], 'short': [], 'trend': 0}
+            dct = {'mid': []}
 
-        lst_long = dct['long']
-        lst_short = dct['short']
         lst_mid = dct['mid']
-
-        if len(lst_long) < len_long:
-            lst_long.append(mid_price)
-        else:
-            lst_long.pop(0)
-            lst_long.append(mid_price)
-
-        if len(lst_short) < len_short:
-            lst_short.append(mid_price)
-        else:
-            lst_short.pop(0)
-            lst_short.append(mid_price)
         
         if len(lst_mid) < len_mid:
             lst_mid.append(mid_price)
@@ -64,17 +46,7 @@ class Trader:
             lst_mid.pop(0)
             lst_mid.append(mid_price)
         
-        if np.mean(lst_short) < np.mean(lst_long) - spread_win:
-            #new_trend_val = -1
-            new_trend_val = 0
-        elif np.mean(lst_short) > np.mean(lst_long) + spread_win:
-            #new_trend_val = 1
-            new_trend_val = 0
-        else:
-            new_trend_val = 0
-
-        
-        return {'mid': lst_mid, 'long': lst_long, 'short':lst_short, 'trend': new_trend_val}
+        return {'mid': lst_mid}
 
     def kelp_ord(self, state: TradingState) -> List[Order]:
         product = "KELP"
@@ -82,10 +54,12 @@ class Trader:
         orders = []
 
         # Dump parameters
-        dump_range = 0
-        # dump_amount = 15
-        buy_max = 20
-        sell_max = 20
+        dump_level = 0
+        
+        # Buy and sell limits
+        buysell_level = 5
+        buysell_max = 15
+
 
         # Get current position for product, defaulting to 0 if not present
         position = state.position[product] if product in state.position else 0
@@ -96,142 +70,89 @@ class Trader:
         buy_lst = []
         sell_lst = []
 
-        # Define the dictionary with long and short windows
-        dict_window = self.kelp_window(state)
+        # Define the list with the last four mid prices
+        window_lst = self.kelp_window(state)['mid']
 
-        # Export trend value and the fair price
-        trend_val = dict_window['trend']
-        fairprice = np.mean(dict_window['mid'])
+        # Define linear regression parameters
+        beta_0 = 17.63806394782273
+        beta_lst = [0.99127796]
+
+        # Find fair price
+        fairprice = beta_0 + beta_lst[0] * np.mean(window_lst)
 
         # Define the price just above the fair price
         above_fprice = math.ceil(fairprice) + 1
         above_fprice_max = math.ceil(fairprice) + 1
 
         # Define the price just below the fair price
-        below_fprice = round(fairprice)
-        #below_fprice = math.floor(fairprice)
+        #below_fprice = round(fairprice)
+        below_fprice = math.floor(fairprice)
         below_fprice_max = math.floor(fairprice)
         
         # always positive quantities indicating changes in the current position
         buy_quantity = 0
         sell_quantity = 0
-        
+
         # Buy or sell close to fairprice if the position is too close to the limits
-        if dump_range < position:
+        if position > dump_level:
             sell_amount = position
             orders.append(Order(product, above_fprice,-sell_amount))
             sell_quantity += sell_amount
 
-        if position < - dump_range:
+        if position < dump_level:
             buy_amount = -position
             orders.append(Order(product, below_fprice,buy_amount))
             buy_quantity += buy_amount
 
-        # Put orders depending on the trend value
-        if trend_val == 0:
-            # If there are asks below fair price, buy the maximum possible volume
-            for p in sell_ord:
-                if p < fairprice and pos_limit - position - buy_quantity > 0:
-                    buy_amount = min(buy_max,-sell_ord[p], pos_limit - position - buy_quantity)
-                    orders.append(Order(product,p,buy_amount))
-                    buy_quantity += buy_amount
-                    if buy_amount < -sell_ord[p]:
-                        sell_lst.append(p)
-                else:
+        # If there are asks below fair price, buy the maximum possible volume
+        for p in sell_ord:
+            if p < fairprice and pos_limit - position - buy_quantity > 0 and position <= buysell_level:
+                buy_amount = min(buysell_max, -sell_ord[p], pos_limit - position - buy_quantity)
+                orders.append(Order(product,p,buy_amount))
+                buy_quantity += buy_amount
+                if buy_amount < -sell_ord[p]:
                     sell_lst.append(p)
+            else:
+                sell_lst.append(p)
 
-            # If there are bids above fair price, sell the maximum possible volume
-            for p in buy_ord:
-                if p > fairprice and pos_limit + position - sell_quantity > 0:
-                    sell_amount = min(sell_max,buy_ord[p], pos_limit + position - sell_quantity)
-                    orders.append(Order(product,p,-sell_amount))
-                    sell_quantity += sell_amount
-                    if sell_amount < buy_ord[p]:
-                        buy_lst.append(p)
-                else:
+        # If there are bids above fair price, sell the maximum possible volume
+        for p in buy_ord:
+            if p > fairprice and pos_limit + position - sell_quantity > 0 and position >= - buysell_level:
+                sell_amount = min(buysell_max, buy_ord[p], pos_limit + position - sell_quantity)
+                orders.append(Order(product,p,-sell_amount))
+                sell_quantity += sell_amount
+                if sell_amount < buy_ord[p]:
                     buy_lst.append(p)
+            else:
+                buy_lst.append(p)
 
-            # If all available positions were closed, put out Orders at maximum profit
-            if not buy_lst and pos_limit - position - buy_quantity > 0:
-                bid_amount = pos_limit - position - buy_quantity
-                orders.append(Order(product, below_fprice_max ,bid_amount))
+        # If all available positions were closed, put out Orders at maximum profit
+        if not buy_lst and pos_limit - position - buy_quantity > 0:
+            bid_amount = min(buysell_max, pos_limit - position - buy_quantity)
+            orders.append(Order(product, below_fprice_max ,bid_amount))
 
-            if not sell_lst and pos_limit + position - sell_quantity > 0:
-                ask_amount = pos_limit + position - sell_quantity
-                orders.append(Order(product,above_fprice_max,-ask_amount))
+        if not sell_lst and pos_limit + position - sell_quantity > 0:
+            ask_amount = min(buysell_max, pos_limit + position - sell_quantity)
+            orders.append(Order(product,above_fprice_max,-ask_amount))
 
-            if buy_lst:
-                # Determine the maximum bid after we executed all profitable trades
-                bid_max = max(buy_lst)
+        if buy_lst:
+            # Determine the maximum bid after we executed all profitable trades
+            bid_max = max(buy_lst)
 
-                # Place competitive bids
-                if bid_max < fairprice - 1 and pos_limit - position - buy_quantity > 0:
-                    bid_price = bid_max + 1
-                    bid_amount = pos_limit - position - buy_quantity
-                    orders.append(Order(product,bid_price,bid_amount))
-            if sell_lst:
-                # Determine the minimum ask after we executed all profitable trades
-                ask_min = min(sell_lst)
+            # Place competitive bids
+            if bid_max < fairprice - 1 and pos_limit - position - buy_quantity > 0:
+                bid_price = bid_max + 1
+                bid_amount = min(buysell_max, pos_limit - position - buy_quantity)
+                orders.append(Order(product,bid_price,bid_amount))
+        if sell_lst:
+            # Determine the minimum ask after we executed all profitable trades
+            ask_min = min(sell_lst)
             
-                # Place competitive asks
-                if ask_min > fairprice + 1 and pos_limit + position - sell_quantity > 0:
-                    ask_price = ask_min - 1
-                    ask_amount = pos_limit + position - sell_quantity
-                    orders.append(Order(product,ask_price,-ask_amount))
- 
-        elif trend_val == +1:
-            # If there are asks below fair price, buy the maximum possible volume
-            for p in sell_ord:
-                if p < fairprice and pos_limit - position - buy_quantity > 0:
-                    buy_amount = min(-sell_ord[p], pos_limit - position - buy_quantity)
-                    orders.append(Order(product,p,buy_amount))
-                    buy_quantity += buy_amount
-                    if buy_amount < -sell_ord[p]:
-                        sell_lst.append(p)
-                else:
-                    sell_lst.append(p)
-
-            # If all available positions were closed, put out Orders at maximum profit
-            if not buy_lst and pos_limit - position - buy_quantity > 0:
-                bid_amount = pos_limit - position - buy_quantity
-                orders.append(Order(product,below_fprice_max,bid_amount))
-
-            if buy_lst:
-                # Determine the maximum bid after we executed all profitable trades
-                bid_max = max(buy_lst)
-
-                # Place competitive bids
-                if bid_max < fairprice - 1 and pos_limit - position - buy_quantity > 0:
-                    bid_price = bid_max + 1
-                    bid_amount = pos_limit - position - buy_quantity
-                    orders.append(Order(product,bid_price,bid_amount))
-                
-        else:
-            # If there are bids above fair price, sell the maximum possible volume
-            for p in buy_ord:
-                if p > fairprice and pos_limit + position - sell_quantity > 0:
-                    sell_amount = min(buy_ord[p], pos_limit + position - sell_quantity)
-                    orders.append(Order(product,p,-sell_amount))
-                    sell_quantity += sell_amount
-                    if sell_amount < buy_ord[p]:
-                        buy_lst.append(p)
-                else:
-                    buy_lst.append(p)
-
-            # If all available positions were closed, put out Orders at maximum profit
-            if not sell_lst and pos_limit + position - sell_quantity > 0:
-                ask_amount = pos_limit + position - sell_quantity
-                orders.append(Order(product, above_fprice_max,-ask_amount))
-
-            if sell_lst:
-                # Determine the minimum ask after we executed all profitable trades
-                ask_min = min(sell_lst)
-            
-                # Place competitive asks
-                if ask_min > fairprice + 1 and pos_limit + position - sell_quantity > 0:
-                    ask_price = ask_min - 1
-                    ask_amount = pos_limit + position - sell_quantity
-                    orders.append(Order(product,ask_price,-ask_amount))
+            # Place competitive asks
+            if ask_min > fairprice + 1 and pos_limit + position - sell_quantity > 0:
+                ask_price = ask_min - 1
+                ask_amount = min(buysell_max, pos_limit + position - sell_quantity)
+                orders.append(Order(product,ask_price,-ask_amount))
 
         return orders
 
