@@ -16,28 +16,27 @@ class Trader:
         buy_lst = list(buy_ord.keys())
         sell_lst = list(sell_ord.keys())
 
-        #mid_weight_curr = 0
-        #total_weight = 0
+        mid_weight_curr = 0
+        total_weight = 0
 
-        mid_price = int((max(buy_lst) + min(sell_lst)) / 2)
+        # fairprice = int((b_max * buy_ord[b_max] - s_min * sell_ord[s_min])/(buy_ord[b_max] - sell_ord[s_min]))
+        for p in buy_lst:
+            if buy_ord[p] > 0:
+                mid_weight_curr += p * buy_ord[p]
+                total_weight += buy_ord[p]
 
-        #for p in buy_lst:
-        #    if buy_ord[p] > 0:
-        #        mid_weight_curr += p * buy_ord[p]
-        #        total_weight += buy_ord[p]
+        for p in sell_lst:
+            if -sell_ord[p] > 0:
+                mid_weight_curr -= p * sell_ord[p]
+                total_weight -= sell_ord[p]
 
-        #for p in sell_lst:
-        #    if -sell_ord[p] > 0:
-        #        mid_weight_curr -= p * sell_ord[p]
-        #        total_weight -= sell_ord[p]
-
-        return mid_price
+        return int(mid_weight_curr / total_weight) if total_weight > 0 else 0
 
     def kelp_window(self, state: TradingState):
         product = "KELP"
 
         # window length
-        len_mid = 4
+        len_mid = 2
 
         mid_price = self.kelp_mprice(state)
 
@@ -67,8 +66,8 @@ class Trader:
         dump_level_high = 40
         
         # Buy and sell limits
-        buysell_level = 5
-        buysell_max = 15
+        buysell_level = 0
+        buysell_max = 50
 
 
         # Get current position for product, defaulting to 0 if not present
@@ -84,21 +83,21 @@ class Trader:
         window_lst = self.kelp_window(state)['mid']
 
         # Define linear regression parameters
-        beta_0 = 17.63806394782273
-        beta_lst = [0.99127796]
+        beta_0 = 5.332276541015744
+        beta_lst = [0.19932855, 0.79803589]
 
         # Find fair price
-        fairprice = beta_0 + beta_lst[0] * np.mean(window_lst)
+        fairprice = min(2026, beta_0 + sum([beta_lst[i] * window_lst[i] for i in range(len(window_lst))]))
 
         # Define the price just above the fair price
         above_fprice = math.ceil(fairprice) + 1
-        #above_fprice_mid = math.ceil(fairprice)
-        #above_fprice_low = math.floor(fairprice)
+        above_fprice_mid = math.ceil(fairprice)
+        above_fprice_low = math.floor(fairprice)
 
         # Define the price just below the fair price
         below_fprice = math.floor(fairprice)
-        #below_fprice_mid = math.floor(fairprice)
-        #below_fprice_high = math.ceil(fairprice)
+        below_fprice_mid = math.floor(fairprice)
+        below_fprice_high = math.ceil(fairprice)
         
         # always positive quantities indicating changes in the current position
         buy_quantity = 0
