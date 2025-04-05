@@ -82,12 +82,12 @@ class Trader:
 
         # Define the price just above the fair price
         above_fprice = math.ceil(fairprice) + 1
-        above_fprice_max = math.ceil(fairprice) + 1
+        #above_fprice_max = math.ceil(fairprice) + 1
 
         # Define the price just below the fair price
         #below_fprice = round(fairprice)
         below_fprice = math.floor(fairprice)
-        below_fprice_max = math.floor(fairprice)
+        #below_fprice_max = math.floor(fairprice)
         
         # always positive quantities indicating changes in the current position
         buy_quantity = 0
@@ -127,13 +127,13 @@ class Trader:
                 buy_lst.append(p)
 
         # If all available positions were closed, put out Orders at maximum profit
-        if not buy_lst and pos_limit - position - buy_quantity > 0:
-            bid_amount = min(buysell_max, pos_limit - position - buy_quantity)
-            orders.append(Order(product, below_fprice_max ,bid_amount))
-
-        if not sell_lst and pos_limit + position - sell_quantity > 0:
-            ask_amount = min(buysell_max, pos_limit + position - sell_quantity)
-            orders.append(Order(product,above_fprice_max,-ask_amount))
+        #if not buy_lst and pos_limit - position - buy_quantity > 0:
+        #    bid_amount = min(buysell_max, pos_limit - position - buy_quantity)
+        #    orders.append(Order(product, below_fprice_max ,bid_amount))
+        #
+        #if not sell_lst and pos_limit + position - sell_quantity > 0:
+        #    ask_amount = min(buysell_max, pos_limit + position - sell_quantity)
+        #    orders.append(Order(product,above_fprice_max,-ask_amount))
 
         if buy_lst:
             # Determine the maximum bid after we executed all profitable trades
