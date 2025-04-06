@@ -75,7 +75,7 @@ class Trader:
         mid_price = self.kelp_mprice(state)
 
         # Find fair price
-        fairprice = min(2026, round(2 * mid_price)/2)
+        fairprice = round(2 * mid_price)/2
         #fairprice = min(2026, beta_0 + sum([beta_lst[i] * int(window_lst[i]) for i in range(len(window_lst))]))
 
         # Define prices just above and just below the fair price
