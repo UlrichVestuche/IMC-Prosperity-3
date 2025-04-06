@@ -281,8 +281,8 @@ class Trader:
             ### Declare them in class??
             ## Filter and decay
             adverse_volume = 12
-            #beta = -0.19
-            beta = 0
+            beta = -0.19
+            #beta = 0
             
 
             best_ask = min(order_depth.sell_orders.keys())
@@ -320,6 +320,8 @@ class Trader:
             else:
                 fair = mmmid_price
             traderObject["kelp_last_price"] = mmmid_price
+            traderObject['fair_value'] = fair
+
             #logger.print(fair)
             return fair
        
@@ -329,12 +331,12 @@ class Trader:
         orders: List[Order] = []
         # Process market orders for KELP using the instrument parameter
         #self.clear_position_order(orders)
-        self.process_market_orders(orders, instrument="KELP")
+        #self.process_market_orders(orders, instrument="KELP")
 
-        self.clear_position_order(orders)
+        #self.clear_position_order(orders)
 
 
-        soft_position_limit = 50
+        soft_position_limit = 47
         hard_position_limit = 50
         spread = 1.5
         insert = 1
@@ -401,17 +403,17 @@ class Trader:
         #     bid += 1
 
         # sell_quantity = self.position_limit  + (self.position - self.sell_order_volume)
-        # if self.position > soft_position_limit:
-        #     buy_quantity -=10
-        # if self.position < -soft_position_limit:
-        #     sell_quantity -=10
-
-        # buy_quantity = self.position_limit  - (self.position + self.buy_order_volume)
-        # sell_quantity = self.position_limit  + (self.position - self.sell_order_volume)
-        buy_quantity = soft_position_limit  - (self.position + self.buy_order_volume)
-        sell_quantity = soft_position_limit  + (self.position - self.sell_order_volume)
-
         
+
+        buy_quantity = self.position_limit  - (self.position + self.buy_order_volume)
+        sell_quantity = self.position_limit  + (self.position - self.sell_order_volume)
+        # buy_quantity = soft_position_limit  - (self.position + self.buy_order_volume)
+        # sell_quantity = soft_position_limit  + (self.position - self.sell_order_volume)
+
+        if self.position > soft_position_limit:
+            buy_quantity -= 1
+        if self.position < -soft_position_limit:
+            sell_quantity -=1
         
 
         if buy_quantity > 0:
@@ -426,9 +428,16 @@ class Trader:
         # Main execution method called during each trading cycle
         result = {}
         traderObject = {}
+        conversions = 1
         if state.traderData != None and state.traderData != "":
             traderObject = jsonpickle.decode(state.traderData)
+        #3k is the best result:)
+        if state.timestamp <=400:
 
+            traderData = jsonpickle.encode(traderObject)
+            logger.flush(state, result, conversions, traderData)
+
+            return result, conversions, traderData
 
 
         # Check if RAINFOREST_RESIN is available in the current market data
@@ -451,9 +460,9 @@ class Trader:
             result["KELP"] = kelp_orders
 
 
-
+        logger.print("position:",self.position)
         # traderData and conversions could be used for logging or further processing
         traderData = jsonpickle.encode(traderObject)
-        conversions = 1
+        
         logger.flush(state, result, conversions, traderData)
         return result, conversions, traderData
