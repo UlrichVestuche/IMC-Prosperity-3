@@ -187,7 +187,7 @@ class Trader:
 
         window_lst = dict_kelp['mid']
 
-        result["RAINFOREST_RESIN"] = self.resin_ord(state)
+        #result["RAINFOREST_RESIN"] = self.resin_ord(state)
         result["KELP"] = self.kelp_ord(state, window_lst)
     
         # String value holding Trader state data required. 

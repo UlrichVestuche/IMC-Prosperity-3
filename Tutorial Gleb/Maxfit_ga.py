@@ -16,20 +16,7 @@ class Trader:
         buy_lst = list(buy_ord.keys())
         sell_lst = list(sell_ord.keys())
 
-        #mid_weight_curr = 0
-        #total_weight = 0
-
         mid_price = int((max(buy_lst) + min(sell_lst)) / 2)
-
-        #for p in buy_lst:
-        #    if buy_ord[p] > 0:
-        #        mid_weight_curr += p * buy_ord[p]
-        #        total_weight += buy_ord[p]
-
-        #for p in sell_lst:
-        #    if -sell_ord[p] > 0:
-        #        mid_weight_curr -= p * sell_ord[p]
-        #        total_weight -= sell_ord[p]
 
         return mid_price
 
@@ -231,7 +218,7 @@ class Trader:
         
         result = {}
 
-        result["RAINFOREST_RESIN"] = self.resin_ord(state)    
+        #result["RAINFOREST_RESIN"] = self.resin_ord(state)    
         result["KELP"] = self.kelp_ord(state) 
     
         # String value holding Trader state data required. 
