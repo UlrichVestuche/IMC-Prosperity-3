@@ -281,7 +281,7 @@ class Trader:
             ### Declare them in class??
             ## Filter and decay
             adverse_volume = 12
-            beta = -0.19
+            beta = -0.2143
             #beta = 0
             
 
