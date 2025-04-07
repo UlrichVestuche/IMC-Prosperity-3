@@ -16,20 +16,8 @@ class Trader:
         buy_lst = list(buy_ord.keys())
         sell_lst = list(sell_ord.keys())
 
-        #mid_weight_curr = 0
-        #total_weight = 0
 
         mid_price = int((max(buy_lst) + min(sell_lst)) / 2)
-
-        #for p in buy_lst:
-        #    if buy_ord[p] > 0:
-        #        mid_weight_curr += p * buy_ord[p]
-        #        total_weight += buy_ord[p]
-
-        #for p in sell_lst:
-        #    if -sell_ord[p] > 0:
-        #        mid_weight_curr -= p * sell_ord[p]
-        #        total_weight -= sell_ord[p]
 
         return mid_price
 
@@ -61,10 +49,6 @@ class Trader:
         product = "KELP"
         pos_limit = 50
         orders = []
-
-        # Dump parameters
-        dump_Level_mid = 20
-        dump_level_high = 40
         
         # Buy and sell limits
         buysell_level = 5
@@ -93,13 +77,9 @@ class Trader:
 
         # Define the price just above the fair price
         above_fprice = math.ceil(fairprice + 1)
-        #above_fprice_mid = math.ceil(fairprice)
-        #above_fprice_low = math.floor(fairprice)
 
         # Define the price just below the fair price
         below_fprice = math.floor(fairprice)
-        #below_fprice_mid = math.floor(fairprice)
-        #below_fprice_high = math.ceil(fairprice)
         
         # always positive quantities indicating changes in the current position
         buy_quantity = 0
@@ -111,29 +91,11 @@ class Trader:
             orders.append(Order(product, above_fprice,-sell_amount))
             sell_quantity += sell_amount
 
-        #elif dump_Level_mid < posution <= dump_level_high:
-        #    sell_amount = 20
-        #    orders.append(Order(product, above_fprice_mid,-sell_amount))
-        #    sell_quantity += sell_amount
-        #elif dump_level_high < position <= pos_limit:
-        #    sell_amount = 20
-        #    orders.append(Order(product, above_fprice_low,-sell_amount))
-        #    sell_quantity += sell_amount
-
 
         if 0 > position: # >= -dump_Level_mid:
             buy_amount = -position
             orders.append(Order(product, below_fprice,buy_amount))
             buy_quantity += buy_amount
-
-        #elif -dump_Level_mid > posution >= -dump_level_high:
-        #    buy_amount = 20
-        #    orders.append(Order(product, below_fprice_mid,buy_amount))
-        #    buy_quantity += buy_amount
-        #elif -dump_level_high > position >= -pos_limit:
-        #    buy_amount = 20
-        #    orders.append(Order(product, below_fprice_high,buy_amount))
-        #    buy_quantity += buy_amount
 
         # If there are asks below fair price, buy the maximum possible volume
         for p in sell_ord:
@@ -158,15 +120,6 @@ class Trader:
                     break
             else:
                 buy_lst.append(p)
-
-        # If all available positions were closed, put out Orders at maximum profit
-        #if not buy_lst and pos_limit - position - buy_quantity > 0:
-        #    bid_amount = min(buysell_max, pos_limit - position - buy_quantity)
-        #    orders.append(Order(product, below_fprice_max ,bid_amount))
-        #
-        #if not sell_lst and pos_limit + position - sell_quantity > 0:
-        #    ask_amount = min(buysell_max, pos_limit + position - sell_quantity)
-        #    orders.append(Order(product,above_fprice_max,-ask_amount))
 
         if buy_lst:
             # Determine the maximum bid after we executed all profitable trades
@@ -246,13 +199,13 @@ class Trader:
         ask_min = min(sell_lst)
 
         # Place competitive bids
-        if bid_max < fairprice - spread and pos_limit - position - buy_quantity > 0:
+        if bid_max + 1 < fairprice and pos_limit - position - buy_quantity > 0:
             bid_price = bid_max + 1
             bid_amount = pos_limit - position - buy_quantity
             orders.append(Order(product,bid_price,bid_amount))
         
         # Place competitive asks
-        if ask_min > fairprice + spread and pos_limit + position - sell_quantity > 0:
+        if ask_min - 1 > fairprice and pos_limit + position - sell_quantity > 0:
             ask_price = ask_min - 1
             ask_amount = pos_limit + position - sell_quantity
             orders.append(Order(product,ask_price,-ask_amount))
@@ -266,7 +219,7 @@ class Trader:
         
         result = {}
 
-        # result["RAINFOREST_RESIN"] = self.resin_ord(state)    
+        #result["RAINFOREST_RESIN"] = self.resin_ord(state)    
         result["KELP"] = self.kelp_ord(state) 
     
         # String value holding Trader state data required. 
