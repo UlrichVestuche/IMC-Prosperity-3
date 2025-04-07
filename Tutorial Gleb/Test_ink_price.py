@@ -7,14 +7,14 @@ import math
 class Trader:
 
     def ink_ord(self, state: TradingState) -> List[Order]:
-        product = "KELP"
+        product = "SQUID_INK"
         orders = []
 
         # Get current position for product, defaulting to 0 if not present
         position = state.position[product] if product in state.position else 0
 
         if position == 0:
-            orders.append(Order(product,2026,1))
+            orders.append(Order(product,1836,1))
 
         return orders
 
@@ -96,7 +96,8 @@ class Trader:
         result = {}
 
         # result["RAINFOREST_RESIN"] = self.resin_ord(state)    
-        result["KELP"] = self.kelp_ord(state) 
+        #result["KELP"] = self.kelp_ord(state)
+        result["SQUID_INK"] = self.ink_ord(state)
     
         # String value holding Trader state data required. 
 		# It will be delivered as TradingState.traderData on next execution.
