@@ -330,8 +330,8 @@ class Trader:
         if len(order_depth.sell_orders) != 0 and len(order_depth.buy_orders) != 0:
             # Filter and decay parameters for SQUID_INK
             adverse_volume = 12
-            beta = -0.2143
-
+            #beta = -0.2143
+            beta = 0
             best_ask = min(order_depth.sell_orders.keys())
             best_bid = max(order_depth.buy_orders.keys())
 
@@ -359,6 +359,11 @@ class Trader:
             if traderObject.get("squid_ink_last_price", None) is not None:
                 last_price = traderObject["squid_ink_last_price"]
                 last_returns = (mmmid_price - last_price) / last_price
+                # Record previous returns
+                if "squid_ink_prev_returns" not in traderObject:
+                    traderObject["squid_ink_prev_returns"] = []
+                traderObject["squid_ink_prev_returns"].append(last_returns)
+                traderObject["squid_ink_last_returns"] = last_returns
                 pred_returns = last_returns * beta
                 fair = mmmid_price + (mmmid_price * pred_returns)
             else:
@@ -560,11 +565,17 @@ class Trader:
             squid_ink_position = state.position["SQUID_INK"] if "SQUID_INK" in state.position else 0
             # Calculate fair price for SQUID_INK using the new function
             fair_value_for_squid_ink = self.squid_ink_fair_value(state.order_depths["SQUID_INK"], traderObject)
-            self.set_context(state.order_depths["SQUID_INK"], fair_value_for_squid_ink, 2, squid_ink_position, 50, 'SQUID_INK')
-            squid_ink_orders = self.ink_orders()
-            result["SQUID_INK"] = squid_ink_orders
+            normal_std = 0.0009120110012933297
+            threshold = 3.5 * normal_std
+            if traderObject.get("squid_ink_last_returns", None) is not None and abs(traderObject["squid_ink_last_returns"]) > threshold:
+                logger.print("Skipping SQUID_INK trade due to outlier return:", traderObject["squid_ink_last_returns"])
+                result["SQUID_INK"] = []
+            else:
+                self.set_context(state.order_depths["SQUID_INK"], fair_value_for_squid_ink, 2, squid_ink_position, 50, 'SQUID_INK')
+                squid_ink_orders = self.ink_orders()
+                result["SQUID_INK"] = squid_ink_orders
 
-        #logger.print("position:",self.position)
+        logger.print("position:",self.position)
         # traderData and conversions could be used for logging or further processing
         traderData = jsonpickle.encode(traderObject)
         
