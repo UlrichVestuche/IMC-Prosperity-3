@@ -179,6 +179,9 @@ class Trader:
     
     def process_market_orders(self, orders: List[Order], instrument: str = "RAINFOREST_RESIN") -> None:
         # Process sell orders: check each sell order in the order book
+
+        width = 1 
+
         if self.order_depth.sell_orders:
             best_ask = min(self.order_depth.sell_orders.keys())
             ask_amount = -self.order_depth.sell_orders[best_ask]
@@ -187,7 +190,12 @@ class Trader:
                 if quantity > 0:
                     orders.append(Order(instrument, best_ask, quantity))
                     self.buy_order_volume += quantity
-                    logger.print('I found good buy price:', best_ask, "fair:",self.fair_value)
+
+                    # delete if empty
+                    self.order_depth.sell_orders[best_ask] += quantity
+                    #if self.order_depth.sell_orders[best_ask] == 0:
+                    #        del self.order_depth.sell_orders[best_ask]
+                    logger.print('I found good buy price:', best_ask, "fair:",self.fair_value, 'quantity:', quantity)
         # Process buy orders: evaluate if the best bid is favorable
         if len(self.order_depth.buy_orders) != 0:
             best_bid = max(self.order_depth.buy_orders.keys())
@@ -199,7 +207,12 @@ class Trader:
                 if quantity > 0:
                     orders.append(Order(instrument, best_bid, -1 * quantity))
                     self.sell_order_volume += quantity
-                    logger.print('I found good sell price:', best_bid, "fair:", self.fair_value)
+
+                    # delete if empty
+                    self.order_depth.buy_orders[best_bid] -= quantity
+                    #if self.order_depth.buy_orders[best_bid] == 0:
+                    #        del self.order_depth.buy_orders[best_bid]
+                    logger.print('I found good sell price:', best_bid, "fair:", self.fair_value, 'quantity:', quantity)
         
 
     def clear_position_order(self, orders: List[Order]) -> None:
@@ -209,8 +222,23 @@ class Trader:
         # Round the fair value and determine floor/ceiling for bid/ask decisions
         width = 1
         fair = round(self.fair_value)
-        fair_for_bid = round(fair - width)
-        fair_for_ask = round(fair + width)
+
+        # fair_for_bid = round(fair - width)
+        # fair_for_ask = round(fair + width)
+
+        #taking the number just above and just below
+        # fair_for_ask = math.ceil(self.fair_value)
+        # fair_for_bid = math.floor(self.fair_value)
+
+        fair_for_ask = math.ceil(self.fair_value)
+        
+        fair_for_bid = math.floor(self.fair_value)
+        # taking the one above
+        if math.ceil(self.fair_value) == self.fair_value:
+            fair_for_ask = fair+1
+            fair_for_bid = fair-1
+        
+
         buy_quantity = self.position_limit - (self.position + self.buy_order_volume)
         sell_quantity = self.position_limit + (self.position - self.sell_order_volume)
         if position_after_take > 0:
@@ -220,26 +248,29 @@ class Trader:
                 for price, volume in self.order_depth.buy_orders.items()
                 if price >= fair_for_ask
             )
-            clear_quantity = min(clear_quantity, position_after_take)
+            #clear_quantity = min(clear_quantity, position_after_take)
+            clear_quantity = position_after_take
             sent_quantity = min(sell_quantity, clear_quantity)
             if sent_quantity > 0:
                 orders.append(Order(self.product, fair_for_ask, -abs(sent_quantity)))
                 self.sell_order_volume += abs(sent_quantity)
-            logger.print('I tried clearing:',position_after_take,'with this price : ', fair_for_ask)
+                
+            logger.print('I tried clearing-selling:',sent_quantity,'with this price : ', fair_for_ask)
 
         if position_after_take < 0:
-            # Aggregate volume from all sell orders with price lower than fair_for_bid
+            #Aggregate volume from all sell orders with price lower than fair_for_bid
             clear_quantity = sum(
                 abs(volume)
                 for price, volume in self.order_depth.sell_orders.items()
                 if price <= fair_for_bid
             )
-            clear_quantity = min(clear_quantity, abs(position_after_take))
+            #clear_quantity = min(clear_quantity, abs(position_after_take))
+            clear_quantity = abs(position_after_take)
             sent_quantity = min(buy_quantity, clear_quantity)
             if sent_quantity > 0:
                 orders.append(Order(self.product, fair_for_bid, abs(sent_quantity)))
                 self.buy_order_volume += abs(sent_quantity)
-            logger.print('I tried clearing:',position_after_take,'with this price : ', fair_for_bid)
+            logger.print('I tried clearing-buying:', sent_quantity,'with this price : ', fair_for_bid)
 
         
 
@@ -250,8 +281,8 @@ class Trader:
             ### Declare them in class??
             ## Filter and decay
             adverse_volume = 12
-            beta = -0.19
-            
+            beta = -0.2143
+            #beta = 0
             
 
             best_ask = min(order_depth.sell_orders.keys())
@@ -289,6 +320,8 @@ class Trader:
             else:
                 fair = mmmid_price
             traderObject["kelp_last_price"] = mmmid_price
+            traderObject['fair_value'] = fair
+
             #logger.print(fair)
             return fair
        
@@ -297,16 +330,18 @@ class Trader:
     def kelp_orders(self) -> List[Order]:
         orders: List[Order] = []
         # Process market orders for KELP using the instrument parameter
-        self.process_market_orders(orders, instrument="KELP")
+        #self.clear_position_order(orders)
+        #self.process_market_orders(orders, instrument="KELP")
 
-        self.clear_position_order(orders)
+        #self.clear_position_order(orders)
 
 
-        soft_position_limit = 50
-        spread = 2
+        soft_position_limit = 47
+        hard_position_limit = 50
+        spread = 1.5
         insert = 1
        
-        fair_value = round(self.fair_value)
+        fair_value = self.fair_value
         
         #self.calculate_fair_price(self.order_depth)
         asks_above_fair = [
@@ -323,7 +358,13 @@ class Trader:
         best_ask_above_fair = min(asks_above_fair) if len(asks_above_fair) > 0 else None
         best_bid_below_fair = max(bids_below_fair) if len(bids_below_fair) > 0 else None
 
-        ask = round(fair_value + spread)
+        if fair_value == round(fair_value):
+            ask = round(fair_value + 1)
+            bid = round(fair_value - 1)
+        else:
+            ask = round(fair_value + 0.5)
+            bid = round(fair_value - 0.5)
+
         if best_ask_above_fair != None:
             ask = best_ask_above_fair - insert
             # if abs(best_ask_above_fair - fair_value) <= join_edge:
@@ -331,24 +372,12 @@ class Trader:
             # else:
             #     ask = best_ask_above_fair - 1  # penny
 
-        bid = round(fair_value - spread)
+        
         if best_bid_below_fair != None:
             bid = best_bid_below_fair + insert
-            # if abs(fair_value - best_bid_below_fair) <= join_edge:
-            #     bid = best_bid_below_fair
-            # else:
-            #     bid = best_bid_below_fair + 1
-        # Determine best ask for KELP
-        
 
-       
-        
 
-        ## Let's to clean up slightly buy/sell slighlty higher/lower
-        # if self.position > soft_position_limit:
-        #     ask -=1
-        # elif self.position < -1 * soft_position_limit:
-        #     bid += 1
+
         RecoverPosition = 3
 
 
@@ -367,23 +396,48 @@ class Trader:
         # else:
         #     sell_quantity = self.position_limit + (self.position - self.sell_order_volume)
 
+        # Let's to clean up slightly buy/sell slighlty higher/lower
+        # if self.position > soft_position_limit:
+        #     ask -=1
+        # elif self.position < -1 * soft_position_limit:
+        #     bid += 1
 
-        buy_quantity = soft_position_limit - (self.position + self.buy_order_volume)
-        sell_quantity = soft_position_limit + (self.position - self.sell_order_volume)
+        # sell_quantity = self.position_limit  + (self.position - self.sell_order_volume)
+        
+
+        buy_quantity = self.position_limit  - (self.position + self.buy_order_volume)
+        sell_quantity = self.position_limit  + (self.position - self.sell_order_volume)
+        # buy_quantity = soft_position_limit  - (self.position + self.buy_order_volume)
+        # sell_quantity = soft_position_limit  + (self.position - self.sell_order_volume)
+
+        if self.position > soft_position_limit:
+            buy_quantity -= 1
+        if self.position < -soft_position_limit:
+            sell_quantity -=1
+        
+
         if buy_quantity > 0:
             orders.append(Order("KELP", bid, buy_quantity))
+            logger.print('Trying to market make with bid:', bid,"buy quantity:", buy_quantity)
         if sell_quantity > 0:
             orders.append(Order("KELP", ask, -sell_quantity))
-
+            logger.print('Trying to market make with sell:', ask,"sell quantity:", sell_quantity)
         return orders
 
     def run(self, state: TradingState):
         # Main execution method called during each trading cycle
         result = {}
         traderObject = {}
+        conversions = 1
         if state.traderData != None and state.traderData != "":
             traderObject = jsonpickle.decode(state.traderData)
+        #3k is the best result:)
+        if state.timestamp <=400:
 
+            traderData = jsonpickle.encode(traderObject)
+            logger.flush(state, result, conversions, traderData)
+
+            return result, conversions, traderData
 
 
         # Check if RAINFOREST_RESIN is available in the current market data
@@ -406,9 +460,9 @@ class Trader:
             result["KELP"] = kelp_orders
 
 
-
+        logger.print("position:",self.position)
         # traderData and conversions could be used for logging or further processing
         traderData = jsonpickle.encode(traderObject)
-        conversions = 1
+        
         logger.flush(state, result, conversions, traderData)
         return result, conversions, traderData
