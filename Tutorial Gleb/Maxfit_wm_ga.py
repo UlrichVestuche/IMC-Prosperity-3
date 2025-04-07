@@ -27,10 +27,15 @@ class Trader:
                 mid_weight_curr -= p * sell_ord[p]
                 total_weight -= sell_ord[p]
 
-        return mid_weight_curr / total_weight if total_weight > 0 else 0
+        mid_price = mid_weight_curr / total_weight if total_weight > 0 else 0
+
+        return round(2 * mid_price)/2
     
     def kelp_window(self, state: TradingState):
         product = "KELP"
+
+         # Get current position for product, defaulting to 0 if not present
+        position = state.position[product] if product in state.position else 0
 
         # window length
         len_mid = 2
@@ -41,68 +46,55 @@ class Trader:
         if state.traderData:
             dct = jsonpickle.decode(state.traderData)
         else:
-            dct = {'mid': []}
+            dct = {'mid': [], 'frame': 0}
 
         lst_mid = dct['mid']
+        frame = dct['frame']
+        frame += 1
+
+        mid_price_old = lst_mid[-1] if len(lst_mid) > 0 else 0
+            
+
+        if mid_price_old:
+            #if mid_price >= mid_price_old + 1.4:
+            #    mid_price = mid_price_old + 0
         
+            if mid_price <= mid_price_old - 1.4:
+                mid_price = mid_price_old - 0
+
         if len(lst_mid) < len_mid:
             lst_mid.append(mid_price)
         else:
             lst_mid.pop(0)
             lst_mid.append(mid_price)
         
-        return {'mid': lst_mid}
+        return {'mid': lst_mid, 'frame': frame}
 
-    def kelp_ord(self, state: TradingState) -> List[Order]:
+    def kelp_ord(self, state: TradingState, window_lst) -> List[Order]:
         product = "KELP"
         pos_limit = 50
         orders = []
-        
-        # Buy and sell limits
-        buysell_level = 0
-        buysell_max = 50
 
         # Get current position for product, defaulting to 0 if not present
         position = state.position[product] if product in state.position else 0
 
-        buy_ord = state.order_depths[product].buy_orders
-        sell_ord = state.order_depths[product].sell_orders
-
-        buy_lst = list(buy_ord.keys())
-        sell_lst = list(sell_ord.keys())
-
         # Define the weighted mid price
-        mid_price = self.kelp_mprice(state)
+        mid_price = window_lst[-1]
 
         # Find fair price
-        fairprice = round(2 * mid_price)/2
-        #fairprice = min(2026, beta_0 + sum([beta_lst[i] * int(window_lst[i]) for i in range(len(window_lst))]))
+        fairprice = mid_price
 
         # Define prices just above and just below the fair price
         if fairprice.is_integer():
             above_fprice = int(fairprice + 1)
             below_fprice = int(fairprice - 1)
         else:
-            above_fprice = math.ceil(fairprice)
-            below_fprice = math.floor(fairprice)
+            above_fprice = math.ceil(fairprice + 0.5)
+            below_fprice = math.floor(fairprice - 0.5)
         
         # always positive quantities indicating changes in the current position
         buy_quantity = 0
         sell_quantity = 0
-
-        # If there are asks below fair price, buy the maximum possible volume
-        #for p in sell_ord:
-        #    if p < fairprice and pos_limit - position - buy_quantity > 0 and position <= buysell_level:
-        #        buy_amount = min(-sell_ord[p], pos_limit - position - buy_quantity)
-        #        orders.append(Order(product,p,buy_amount))
-        #        buy_quantity += buy_amount
-
-        # If there are bids above fair price, sell the maximum possible volume
-        #for p in buy_ord:
-        #    if p > fairprice and pos_limit + position - sell_quantity > 0 and position >= -buysell_level:
-        #        sell_amount = min(buy_ord[p], pos_limit + position - sell_quantity)
-        #        orders.append(Order(product,p,-sell_amount))
-        #        sell_quantity += sell_amount
 
         bid_amount = pos_limit - position - buy_quantity
         if bid_amount > 0:
@@ -191,12 +183,16 @@ class Trader:
         
         result = {}
 
-        # result["RAINFOREST_RESIN"] = self.resin_ord(state)    
-        result["KELP"] = self.kelp_ord(state) 
+        dict_kelp = self.kelp_window(state)
+
+        window_lst = dict_kelp['mid']
+
+        result["RAINFOREST_RESIN"] = self.resin_ord(state)
+        result["KELP"] = self.kelp_ord(state, window_lst)
     
         # String value holding Trader state data required. 
 		# It will be delivered as TradingState.traderData on next execution.
-        traderData = jsonpickle.encode(self.kelp_window(state))
+        traderData = jsonpickle.encode(dict_kelp)
         
 		# Sample conversion request.
         conversions = 1
