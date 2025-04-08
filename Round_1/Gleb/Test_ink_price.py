@@ -14,7 +14,7 @@ class Trader:
         position = state.position[product] if product in state.position else 0
 
         if position == 0:
-            orders.append(Order(product,1836,1))
+            orders.append(Order(product,1838,1))
 
         return orders
 
