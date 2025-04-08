@@ -330,8 +330,8 @@ class Trader:
         if len(order_depth.sell_orders) != 0 and len(order_depth.buy_orders) != 0:
             # Filter and decay parameters for SQUID_INK
             adverse_volume = 12
-            beta = -0.2143
-
+            #beta = -0.2143
+            beta = 0
             best_ask = min(order_depth.sell_orders.keys())
             best_bid = max(order_depth.buy_orders.keys())
 
@@ -359,6 +359,11 @@ class Trader:
             if traderObject.get("squid_ink_last_price", None) is not None:
                 last_price = traderObject["squid_ink_last_price"]
                 last_returns = (mmmid_price - last_price) / last_price
+                # Record previous returns
+                if "squid_ink_prev_returns" not in traderObject:
+                    traderObject["squid_ink_prev_returns"] = []
+                traderObject["squid_ink_prev_returns"].append(last_returns)
+                traderObject["squid_ink_last_returns"] = last_returns
                 pred_returns = last_returns * beta
                 fair = mmmid_price + (mmmid_price * pred_returns)
             else:
@@ -468,9 +473,9 @@ class Trader:
 
     def ink_orders(self) -> List[Order]:
         orders: List[Order] = []
-        
+        #self.process_market_orders(orders, instrument="SQUID_INK") 
         self.clear_position_order(orders) 
-        soft_position_limit = 47
+        soft_position_limit = 15
         hard_position_limit = 50
         spread = 1.5
         insert = 1
@@ -513,9 +518,9 @@ class Trader:
         sell_quantity = self.position_limit + (self.position - self.sell_order_volume)
         
         if self.position > soft_position_limit:
-            buy_quantity -= 1
+            buy_quantity -= 2
         if self.position < -soft_position_limit:
-            sell_quantity -= 1
+            sell_quantity -= 2
         
         # Create orders for SQUID_INK if there is a positive quantity to trade
         if buy_quantity > 0:
@@ -560,11 +565,31 @@ class Trader:
             squid_ink_position = state.position["SQUID_INK"] if "SQUID_INK" in state.position else 0
             # Calculate fair price for SQUID_INK using the new function
             fair_value_for_squid_ink = self.squid_ink_fair_value(state.order_depths["SQUID_INK"], traderObject)
-            self.set_context(state.order_depths["SQUID_INK"], fair_value_for_squid_ink, 2, squid_ink_position, 50, 'SQUID_INK')
-            squid_ink_orders = self.ink_orders()
-            result["SQUID_INK"] = squid_ink_orders
+            # GARCH(1,1) parameters from volatility analysis
+            GARCH_ALPHA = 0.0225
+            GARCH_BETA = 0.9775
 
-        #logger.print("position:",self.position)
+            # Initialize volatility standard deviation if not already defined in traderObject
+            if 'vol_std' not in traderObject:
+                traderObject['vol_std'] = 0.0009120110012933297  # baseline standard deviation
+
+            # Update volatility forecast using the GARCH(1,1) formula if a last return exists
+            if traderObject.get('squid_ink_last_returns', None) is not None:
+                last_return = traderObject['squid_ink_last_returns']
+                traderObject['vol_std'] = math.sqrt(GARCH_ALPHA * (last_return ** 2) + GARCH_BETA * (traderObject['vol_std'] ** 2))
+
+            # Set dynamic threshold based on the updated volatility forecast
+            threshold = 2.5 * traderObject['vol_std']
+
+            if traderObject.get("squid_ink_last_returns", None) is not None and abs(traderObject["squid_ink_last_returns"]) > threshold:
+                logger.print("Skipping SQUID_INK trade due to outlier return:", traderObject["squid_ink_last_returns"])
+                result["SQUID_INK"] = []
+            else:
+                self.set_context(state.order_depths["SQUID_INK"], fair_value_for_squid_ink, 2, squid_ink_position, 50, 'SQUID_INK')
+                squid_ink_orders = self.ink_orders()
+                result["SQUID_INK"] = squid_ink_orders
+
+        logger.print("position:",self.position)
         # traderData and conversions could be used for logging or further processing
         traderData = jsonpickle.encode(traderObject)
         
