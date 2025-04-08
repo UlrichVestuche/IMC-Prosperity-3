@@ -473,9 +473,9 @@ class Trader:
 
     def ink_orders(self) -> List[Order]:
         orders: List[Order] = []
-        
+        #self.process_market_orders(orders, instrument="SQUID_INK") 
         self.clear_position_order(orders) 
-        soft_position_limit = 47
+        soft_position_limit = 15
         hard_position_limit = 50
         spread = 1.5
         insert = 1
@@ -518,9 +518,9 @@ class Trader:
         sell_quantity = self.position_limit + (self.position - self.sell_order_volume)
         
         if self.position > soft_position_limit:
-            buy_quantity -= 1
+            buy_quantity -= 2
         if self.position < -soft_position_limit:
-            sell_quantity -= 1
+            sell_quantity -= 2
         
         # Create orders for SQUID_INK if there is a positive quantity to trade
         if buy_quantity > 0:
@@ -565,8 +565,22 @@ class Trader:
             squid_ink_position = state.position["SQUID_INK"] if "SQUID_INK" in state.position else 0
             # Calculate fair price for SQUID_INK using the new function
             fair_value_for_squid_ink = self.squid_ink_fair_value(state.order_depths["SQUID_INK"], traderObject)
-            normal_std = 0.0009120110012933297
-            threshold = 3.5 * normal_std
+            # GARCH(1,1) parameters from volatility analysis
+            GARCH_ALPHA = 0.0225
+            GARCH_BETA = 0.9775
+
+            # Initialize volatility standard deviation if not already defined in traderObject
+            if 'vol_std' not in traderObject:
+                traderObject['vol_std'] = 0.0009120110012933297  # baseline standard deviation
+
+            # Update volatility forecast using the GARCH(1,1) formula if a last return exists
+            if traderObject.get('squid_ink_last_returns', None) is not None:
+                last_return = traderObject['squid_ink_last_returns']
+                traderObject['vol_std'] = math.sqrt(GARCH_ALPHA * (last_return ** 2) + GARCH_BETA * (traderObject['vol_std'] ** 2))
+
+            # Set dynamic threshold based on the updated volatility forecast
+            threshold = 2.5 * traderObject['vol_std']
+
             if traderObject.get("squid_ink_last_returns", None) is not None and abs(traderObject["squid_ink_last_returns"]) > threshold:
                 logger.print("Skipping SQUID_INK trade due to outlier return:", traderObject["squid_ink_last_returns"])
                 result["SQUID_INK"] = []
