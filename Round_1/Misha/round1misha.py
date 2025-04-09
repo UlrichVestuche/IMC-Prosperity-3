@@ -230,9 +230,9 @@ class Trader:
         # fair_for_ask = math.ceil(self.fair_value)
         # fair_for_bid = math.floor(self.fair_value)
 
-        fair_for_ask = math.ceil(self.fair_value)
+        fair_for_ask = math.ceil(self.fair_value+1)
         
-        fair_for_bid = math.floor(self.fair_value)
+        fair_for_bid = math.floor(self.fair_value-1)
         # taking the one above
         if math.ceil(self.fair_value) == self.fair_value:
             fair_for_ask = fair+1
@@ -356,21 +356,47 @@ class Trader:
             else:
                 mmmid_price = (mm_ask + mm_bid) / 2
 
+            # if traderObject.get("squid_ink_last_price", None) is not None:
+            #     last_price = traderObject["squid_ink_last_price"]
+            #     last_returns = (mmmid_price - last_price) / last_price
+            #     # Record previous returns
+            #     if "squid_ink_prev_returns" not in traderObject:
+            #         traderObject["squid_ink_prev_returns"] = []
+            #     traderObject["squid_ink_prev_returns"].append(last_returns)
+            #     traderObject["squid_ink_last_returns"] = last_returns
+            #     pred_returns = last_returns * beta
+            #     fair = mmmid_price + (mmmid_price * pred_returns)
+            # else:
+            #     fair = mmmid_price
+
+            # traderObject["squid_ink_last_price"] = mmmid_price
+            # traderObject["fair_value"] = fair
             if traderObject.get("squid_ink_last_price", None) is not None:
+                # Compute last returns as a percentage change for volatility updates
                 last_price = traderObject["squid_ink_last_price"]
                 last_returns = (mmmid_price - last_price) / last_price
-                # Record previous returns
-                if "squid_ink_prev_returns" not in traderObject:
-                    traderObject["squid_ink_prev_returns"] = []
-                traderObject["squid_ink_prev_returns"].append(last_returns)
                 traderObject["squid_ink_last_returns"] = last_returns
-                pred_returns = last_returns * beta
-                fair = mmmid_price + (mmmid_price * pred_returns)
-            else:
-                fair = mmmid_price
 
+                # Compute raw trend as the absolute difference
+                raw_trend = mmmid_price - last_price
+                previous_trend = traderObject.get("squid_ink_trend", 0)
+                smoothed_trend = 0.9 * previous_trend + 0.1 * raw_trend
+                traderObject["squid_ink_trend"] = smoothed_trend
+            else:
+                last_returns = 0
+                smoothed_trend = 0
+
+            # Store the current price for the next cycle
             traderObject["squid_ink_last_price"] = mmmid_price
+
+            # Also store the trend in self for later use in order adjustments
+            self.trend = smoothed_trend
+
+            # Use a sensitivity factor to adjust fair value based on trend
+            sensitivity = 0.0# for now
+            fair = mmmid_price + (sensitivity * smoothed_trend)
             traderObject["fair_value"] = fair
+
 
             return fair
         return None
@@ -475,7 +501,7 @@ class Trader:
         orders: List[Order] = []
         #self.process_market_orders(orders, instrument="SQUID_INK") 
         self.clear_position_order(orders) 
-        soft_position_limit = 15
+        soft_position_limit = 10
         hard_position_limit = 50
         spread = 1.5
         insert = 1
@@ -501,8 +527,8 @@ class Trader:
             ask = round(fair_value + 1)
             bid = round(fair_value - 1)
         else:
-            ask = round(fair_value + 0.5)
-            bid = round(fair_value - 0.5)
+            ask = round(fair_value + 1)
+            bid = round(fair_value - 1)
         
         # Adjust ask and bid based on order book information if available
         if best_ask_above_fair is not None:
@@ -513,14 +539,37 @@ class Trader:
         # RecoverPosition is defined but not used further here
         RecoverPosition = 3
 
-        # Calculate buy and sell quantities based on current positions and order volumes
-        buy_quantity = self.position_limit - (self.position + self.buy_order_volume)
-        sell_quantity = self.position_limit + (self.position - self.sell_order_volume)
+        hard_limit = 10
         
+        # Calculate buy and sell quantities based on current positions and order volumes
+        buy_quantity = min((self.position_limit - (self.position + self.buy_order_volume)),hard_limit)
+        sell_quantity = min((self.position_limit + (self.position - self.sell_order_volume)),hard_limit)
+
+        trend = getattr(self, "trend", 0)
+        # Instead of a fixed factor, compute an adjustment factor that scales with trend strength.
+        # For instance, you can set a base scaling value and then multiply it by some function of the trend magnitude.
+        base_factor = 0.2  # base factor when trend strength is at a minimum threshold
+        trend_strength = abs(trend)
+        # You might cap trend_strength to avoid excessive scaling:
+        max_strength = 0.5  # or any number you find suitable from your data
+        normalized_strength = min(trend_strength, max_strength) / max_strength
+
+        # Now the adjustment factor becomes a blend between no adjustment (1.0 means no reduction) and full adjustment (base_factor).
+        # For example, if normalized_strength=1 (strong trend), then adjustment_factor = base_factor.
+        # If normalized_strength=0, then adjustment_factor = 1 (i.e. no adjustment).
+        adjustment_factor = 1.0 - (1.0 - base_factor) * normalized_strength
+
+        # Then adjust:
+        if trend > 0:
+            sell_quantity = int(sell_quantity * adjustment_factor)
+        elif trend < 0:
+            buy_quantity = int(buy_quantity * adjustment_factor)
+        
+
         if self.position > soft_position_limit:
-            buy_quantity -= 2
+            buy_quantity -= 30
         if self.position < -soft_position_limit:
-            sell_quantity -= 2
+            sell_quantity -= 30
         
         # Create orders for SQUID_INK if there is a positive quantity to trade
         if buy_quantity > 0:
@@ -579,15 +628,18 @@ class Trader:
                 traderObject['vol_std'] = math.sqrt(GARCH_ALPHA * (last_return ** 2) + GARCH_BETA * (traderObject['vol_std'] ** 2))
 
             # Set dynamic threshold based on the updated volatility forecast
-            threshold = 2.5 * traderObject['vol_std']
+            threshold = 2 * traderObject['vol_std']
 
-            if traderObject.get("squid_ink_last_returns", None) is not None and abs(traderObject["squid_ink_last_returns"]) > threshold:
-                logger.print("Skipping SQUID_INK trade due to outlier return:", traderObject["squid_ink_last_returns"])
-                result["SQUID_INK"] = []
-            else:
-                self.set_context(state.order_depths["SQUID_INK"], fair_value_for_squid_ink, 2, squid_ink_position, 50, 'SQUID_INK')
-                squid_ink_orders = self.ink_orders()
-                result["SQUID_INK"] = squid_ink_orders
+            # if traderObject.get("squid_ink_last_returns", None) is not None and abs(traderObject["squid_ink_last_returns"]) > threshold:
+            #     logger.print("Skipping SQUID_INK trade due to outlier return:", traderObject["squid_ink_last_returns"])
+            #     result["SQUID_INK"] = []
+            # else:
+            #     self.set_context(state.order_depths["SQUID_INK"], fair_value_for_squid_ink, 2, squid_ink_position, 50, 'SQUID_INK')
+            #     squid_ink_orders = self.ink_orders()
+            #     result["SQUID_INK"] = squid_ink_orders
+            self.set_context(state.order_depths["SQUID_INK"], fair_value_for_squid_ink, 2, squid_ink_position, 50, 'SQUID_INK')
+            squid_ink_orders = self.ink_orders()
+            result["SQUID_INK"] = squid_ink_orders
 
         logger.print("position:",self.position)
         # traderData and conversions could be used for logging or further processing
