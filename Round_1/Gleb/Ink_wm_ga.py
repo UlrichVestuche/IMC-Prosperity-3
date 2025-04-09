@@ -30,8 +30,51 @@ class Trader:
         mid_price = mid_weight_curr / total_weight if total_weight > 0 else 0
 
         return round(2 * mid_price)/2
+    
+    def ink_window(self, state: TradingState):
+        product = "SQUID_INK"
 
-    def ink_ord(self, state: TradingState) -> List[Order]:
+        # window lengths
+        len_long = 50
+        len_short = 10
+
+        # distance between window curves
+        spread_win = 2
+
+        mid_price = self.ink_mprice(state)
+
+        # Decode the dictionary with long and short windows
+        if state.traderData:
+            dct = jsonpickle.decode(state.traderData)
+        else:
+            dct = {'long': [], 'short': [], 'trend': 0}
+
+        lst_long = dct['long']
+        lst_short = dct['short']
+
+        if len(lst_long) < len_long:
+            lst_long.append(mid_price)
+        else:
+            lst_long.pop(0)
+            lst_long.append(mid_price)
+
+        if len(lst_short) < len_short:
+            lst_short.append(mid_price)
+        else:
+            lst_short.pop(0)
+            lst_short.append(mid_price)
+
+        if np.mean(lst_short) < np.mean(lst_long) - spread_win:
+            new_trend_val = -1
+        elif np.mean(lst_short) > np.mean(lst_long) + spread_win:
+            new_trend_val = 1
+        else:
+            new_trend_val = 0
+
+        
+        return {'long': lst_long, 'short':lst_short, 'trend': new_trend_val}
+
+    def ink_ord(self, state: TradingState, dict_ink) -> List[Order]:
         product = "SQUID_INK"
         pos_limit = 50
         orders = []
@@ -42,12 +85,15 @@ class Trader:
         # Define the weighted mid price
         mid_price = self.ink_mprice(state)
 
+        # Get the trend value from the dictionary
+        trend_val = dict_ink['trend']
+
         # Find fair price
         fairprice = mid_price
-        #if position > 0:
-        #    fairprice = mid_price - 1
-        #elif position < 0:
-        #    fairprice = mid_price + 1
+        if trend_val < 0:
+            fairprice = mid_price - 0.5
+        elif trend_val > 0:
+            fairprice = mid_price + 0.5
 
         # always positive quantities indicating changes in the current position
         buy_quantity = 0
@@ -55,8 +101,8 @@ class Trader:
 
         # Define prices just above and just below the fair price
         if fairprice.is_integer():
-            above_fprice = int(fairprice + 0)
-            below_fprice = int(fairprice - 1)
+            above_fprice = int(fairprice)
+            below_fprice = int(fairprice-1)
         else:
             above_fprice = math.ceil(fairprice)
             below_fprice = math.floor(fairprice)
@@ -75,18 +121,17 @@ class Trader:
         # Only method required. It takes all buy and sell orders for all symbols as an input, and outputs a list of orders to be sent
         #print("traderData: " + state.traderData)
         #print("Observations: " + str(state.observations))
-        
-        result = {}
+        dict_ink=self.ink_window(state)
 
-        #window_lst = dict_kelp['mid']
+        result = {}
 
         #result["RAINFOREST_RESIN"] = self.resin_ord(state)
         #result["KELP"] = self.kelp_ord(state, window_lst)
-        result["SQUID_INK"] = self.ink_ord(state)
+        result["SQUID_INK"] = self.ink_ord(state,dict_ink)
     
         # String value holding Trader state data required. 
 		# It will be delivered as TradingState.traderData on next execution.
-        traderData = jsonpickle.encode({})
+        traderData = jsonpickle.encode(dict_ink)
         
 		# Sample conversion request.
         conversions = 1
