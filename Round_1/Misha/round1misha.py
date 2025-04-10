@@ -166,15 +166,18 @@ class Trader:
         ## Calculate the remaining quantity that can be bought or sold based on current position and order volume
         buy_quantity = self.position_limit - (self.position + self.buy_order_volume)
         if buy_quantity > 0:
-            # Append a buy order at a price slightly above the best bid
-            orders.append(Order("RAINFOREST_RESIN", bbbf + insert, buy_quantity))
+            if bbbf!= fair_value:
+            #     orders.append(Order("RAINFOREST_RESIN", bbbf, buy_quantity))
+            # else:
+            #     
+                orders.append(Order("RAINFOREST_RESIN", bbbf + insert, buy_quantity))
 
         sell_quantity = self.position_limit + (self.position - self.sell_order_volume)
         if sell_quantity > 0:
             # Append a sell order. Adjust the sell price based on the best ask and a predefined offset
-            if baaf - insert == fair_value:
-                orders.append(Order("RAINFOREST_RESIN", baaf, -sell_quantity))
-            else:
+            if baaf!= fair_value:
+            #     orders.append(Order("RAINFOREST_RESIN", baaf, -sell_quantity))
+            # else:
                 orders.append(Order("RAINFOREST_RESIN", baaf - insert, -sell_quantity))
 
         return orders
@@ -250,8 +253,8 @@ class Trader:
                 for price, volume in self.order_depth.buy_orders.items()
                 if price >= fair_for_ask
             )
-            #clear_quantity = min(clear_quantity, position_after_take)
-            clear_quantity = position_after_take
+            clear_quantity = min(clear_quantity, position_after_take)
+            # clear_quantity = position_after_take
             sent_quantity = min(sell_quantity, clear_quantity)
             if sent_quantity > 0:
                 orders.append(Order(self.product, fair_for_ask, -abs(sent_quantity)))
@@ -266,8 +269,8 @@ class Trader:
                 for price, volume in self.order_depth.sell_orders.items()
                 if price <= fair_for_bid
             )
-            #clear_quantity = min(clear_quantity, abs(position_after_take))
-            clear_quantity = abs(position_after_take)
+            clear_quantity = min(clear_quantity, abs(position_after_take))
+            # clear_quantity = abs(position_after_take)
             sent_quantity = min(buy_quantity, clear_quantity)
             if sent_quantity > 0:
                 orders.append(Order(self.product, fair_for_bid, abs(sent_quantity)))
@@ -332,10 +335,10 @@ class Trader:
     def kelp_orders(self) -> List[Order]:
         orders: List[Order] = []
         # Process market orders for KELP using the instrument parameter
-        self.clear_position_order(orders)
-        #self.process_market_orders(orders, instrument="KELP")
-
         #self.clear_position_order(orders)
+        self.process_market_orders(orders, instrument="KELP")
+
+        self.clear_position_order(orders)
 
 
         soft_position_limit = 47
@@ -413,9 +416,9 @@ class Trader:
         # sell_quantity = soft_position_limit  + (self.position - self.sell_order_volume)
 
         if self.position > soft_position_limit:
-            buy_quantity -= 1
+            buy_quantity -= 3
         if self.position < -soft_position_limit:
-            sell_quantity -=1
+            sell_quantity -=3
         
 
         if buy_quantity > 0:
@@ -455,21 +458,7 @@ class Trader:
             else:
                 mmmid_price = (mm_ask + mm_bid) / 2
 
-            # if traderObject.get("squid_ink_last_price", None) is not None:
-            #     last_price = traderObject["squid_ink_last_price"]
-            #     last_returns = (mmmid_price - last_price) / last_price
-            #     # Record previous returns
-            #     if "squid_ink_prev_returns" not in traderObject:
-            #         traderObject["squid_ink_prev_returns"] = []
-            #     traderObject["squid_ink_prev_returns"].append(last_returns)
-            #     traderObject["squid_ink_last_returns"] = last_returns
-            #     pred_returns = last_returns * beta
-            #     fair = mmmid_price + (mmmid_price * pred_returns)
-            # else:
-            #     fair = mmmid_price
-
-            # traderObject["squid_ink_last_price"] = mmmid_price
-            # traderObject["fair_value"] = fair
+           
             if traderObject.get("squid_ink_last_price", None) is not None:
                 # Compute last returns as a percentage change for volatility updates
                 last_price = traderObject["squid_ink_last_price"]
@@ -512,22 +501,14 @@ class Trader:
         return None
     def ink_orders(self) -> List[Order]:
         orders: List[Order] = []
-        #self.process_market_orders(orders, instrument="SQUID_INK") 
-        #self.clear_position_order(orders) 
-        soft_position_limit = 10
-        hard_position_limit = 10
-
         
-        hard_limit = 10
         # Initialize volatility standard deviation if not already defined in traderObject
         logger.print('price_dif:', self.price_dif, 'std:', self.std)
         Z_score = self.price_dif / self.std
-        low_bar = 0.01
+        
 
         # Calculate quantities based on current position and order volumes
         adverse_volume = 12
-        best_ask = min(self.order_depth.sell_orders.keys())
-        best_bid = max(self.order_depth.buy_orders.keys())
 
         filtered_ask = [
             price
@@ -542,52 +523,19 @@ class Trader:
         mm_ask = min(filtered_ask) if len(filtered_ask) > 0 else None
         mm_bid = max(filtered_bid) if len(filtered_bid) > 0 else None
          
+        if mm_ask is None or mm_bid is None:
+            return orders
 
-
-        # if self.position == 0 and Z_score > 1.5:
-        #     orders.append(Order("SQUID_INK", mm_bid, -25))
-        #     logger.print('Trying to market make with sell:',mm_bid, "sell quantity:", 20)
-        # elif self.position == 0 and Z_score < -1.5:
-        #     orders.append(Order("SQUID_INK", mm_ask, 25))
-        #     logger.print('Trying to market make with buy:', mm_ask, "buy quantity:", 20)
-        # elif self.position < 0 and Z_score < low_bar:
-        #     orders.append(Order("SQUID_INK", mm_ask, abs(self.position)))
-        #     logger.print('Stop Condition', mm_ask, "sell quantity:", self.position)
-        # elif self.position > 0 and Z_score > -low_bar:
-        #     orders.append(Order("SQUID_INK", mm_bid, -abs(self.position)))
-        #     logger.print('Stop Condition', mm_bid, "buy quantity:", -abs(self.position))
-        if self.position >= -1 and Z_score > 1.2:
-            orders.append(Order("SQUID_INK", mm_bid, -50))
+        
+        if self.position >= -1 and Z_score > 1.5:
+            orders.append(Order("SQUID_INK", mm_bid, -10))
             logger.print('Trying to market make with sell:',mm_bid, "sell quantity:", 20)
-        elif self.position <= 1 and Z_score < -1.2:
-            orders.append(Order("SQUID_INK", mm_ask, 50))
+        elif self.position <= 1 and Z_score < -1.5:
+            orders.append(Order("SQUID_INK", mm_ask, +10))
             logger.print('Trying to market make with buy:', mm_ask, "buy quantity:", 20)
         
         
-        # if self.position == 0 and Z_score > 2:
-        #     orders.append(Order("SQUID_INK", mm_bid, -25))
-        #     logger.print('Trying to market make with sell:',mm_bid, "sell quantity:", 20)
-        # elif self.position == 0 and Z_score < -2:
-        #     orders.append(Order("SQUID_INK", mm_ask, 25))
-        #     logger.print('Trying to market make with buy:', mm_ask, "buy quantity:", 20)
-        # elif self.position < 0 and Z_score < low_bar:
-        #     orders.append(Order("SQUID_INK", mm_ask, abs(self.position)))
-        #     logger.print('Stop Condition', mm_ask, "sell quantity:", self.position)
-        # elif self.position > 0 and Z_score > -low_bar:
-        #     orders.append(Order("SQUID_INK", mm_bid, -abs(self.position)))
-        #     logger.print('Stop Condition', mm_bid, "buy quantity:", -abs(self.position))
-        # Calculate buy and sell quantities based on current positions and order volumes
-        # buy_quantity = min((self.position_limit - (self.position + self.buy_order_volume)),hard_limit)
-        # sell_quantity = min((self.position_limit + (self.position - self.sell_order_volume)),hard_limit)
-        
-        
-        # Create orders for SQUID_INK if there is a positive quantity to trade
-        # if buy_quantity > 0:
-        #     orders.append(Order("SQUID_INK", bid, buy_quantity))
-        #     logger.print('Trying to market make with bid:', bid, "buy quantity:", buy_quantity)
-        # if sell_quantity > 0:
-        #     orders.append(Order("SQUID_INK", ask, -sell_quantity))
-        #     logger.print('Trying to market make with sell:', ask, "sell quantity:", sell_quantity)
+      
         logger.print('Z_score:', Z_score)
         return orders
     def run(self, state: TradingState):
@@ -604,23 +552,23 @@ class Trader:
     
 
         # Check if RAINFOREST_RESIN is available in the current market data
-        # if "RAINFOREST_RESIN" in state.order_depths:
-        #     # Get current position for RAINFOREST_RESIN, defaulting to 0 if not present
-        #     resin_position = state.position["RAINFOREST_RESIN"] if "RAINFOREST_RESIN" in state.position else 0
-        #     # Set up the trading context with the latest market data and parameters
-        #     self.set_context(state.order_depths["RAINFOREST_RESIN"], 10000, 2, resin_position, 50)
-        #     # Generate trading orders for RAINFOREST_RESIN
-        #     #resin_orders = self.resin_orders()
-        #     #result["RAINFOREST_RESIN"] = resin_orders
+        if "RAINFOREST_RESIN" in state.order_depths:
+            # Get current position for RAINFOREST_RESIN, defaulting to 0 if not present
+            resin_position = state.position["RAINFOREST_RESIN"] if "RAINFOREST_RESIN" in state.position else 0
+            # Set up the trading context with the latest market data and parameters
+            self.set_context(state.order_depths["RAINFOREST_RESIN"], 10000, 2, resin_position, 50, "RAINFOREST_RESIN")
+            # Generate trading orders for RAINFOREST_RESIN
+            resin_orders = self.resin_orders()
+            result["RAINFOREST_RESIN"] = resin_orders
 
 
-        # if "KELP" in state.order_depths:
-        #     kelp_position = state.position["KELP"] if "KELP" in state.position else 0
-        #     # Calculate fair price for KELP using the new function
-        #     fair_value_for_kelp = self.kelp_fair_value(state.order_depths["KELP"], traderObject)
-        #     self.set_context(state.order_depths["KELP"], fair_value_for_kelp, 2, kelp_position, 50, 'KELP')
-        #     kelp_orders = self.kelp_orders()
-        #     result["KELP"] = kelp_orders
+        if "KELP" in state.order_depths:
+            kelp_position = state.position["KELP"] if "KELP" in state.position else 0
+            # Calculate fair price for KELP using the new function
+            fair_value_for_kelp = self.kelp_fair_value(state.order_depths["KELP"], traderObject)
+            self.set_context(state.order_depths["KELP"], fair_value_for_kelp, 2, kelp_position, 50, 'KELP')
+            kelp_orders = self.kelp_orders()
+            result["KELP"] = kelp_orders
         
         if "SQUID_INK" in state.order_depths:
             
@@ -628,90 +576,13 @@ class Trader:
             # Calculate fair price for SQUID_INK using the new function
             last_price = traderObject["squid_ink_last_price"] if traderObject.get("squid_ink_last_price", None) is not None else None
             fair_value_for_squid_ink = self.squid_ink_fair_value(state.order_depths["SQUID_INK"], traderObject)
-            # GARCH(1,1) parameters from volatility analysis
-             # baseline standard deviation
-
-            # Update volatility forecast using the GARCH(1,1) formula if a last return exists
-            # if traderObject.get('squid_ink_last_returns', None) is not None:
-            #     last_return = traderObject['squid_ink_last_returns']
-            #     traderObject['vol_std'] = math.sqrt(GARCH_ALPHA * (last_return ** 2) + GARCH_BETA * (traderObject['vol_std'] ** 2))
-
-            # Set dynamic threshold based on the updated volatility forecast
-            # threshold = 2 * traderObject['vol_std']
-
-            # if traderObject.get("squid_ink_last_returns", None) is not None and abs(traderObject["squid_ink_last_returns"]) > threshold:
-            #     if self.position > 0 and traderObject["squid_ink_last_returns"] > 0:
-            #         result["SQUID_INK"] = [Order("SQUID_INK", fair_value_for_squid_ink-2, +self.position)]
-            #     elif self.position < 0 and traderObject["squid_ink_last_returns"] < 0:
-            #         result["SQUID_INK"] = [Order("SQUID_INK", fair_value_for_squid_ink+2, -self.position)]
-            #     logger.print("Skipping SQUID_INK trade due to outlier return:", traderObject["squid_ink_last_returns"])
-            #     #result["SQUID_INK"] =  self.orders
-            # else:
-            #     self.set_context(state.order_depths["SQUID_INK"], fair_value_for_squid_ink, 2, squid_ink_position, 50, 'SQUID_INK')
-            #     squid_ink_orders = self.ink_orders()
-            #     result["SQUID_INK"] = squid_ink_orders
             self.set_context(state.order_depths["SQUID_INK"], fair_value_for_squid_ink, 2, squid_ink_position, 50, 'SQUID_INK')
             squid_ink_orders = self.ink_orders()
             
             result["SQUID_INK"] = squid_ink_orders 
             if state.timestamp < 2000:
                 result["SQUID_INK"] = []
-            # try using prev value as a fair value
-            # if last_price is not None:
-            #     self.set_context(state.order_depths["SQUID_INK"], last_price, 2, squid_ink_position, 50, 'SQUID_INK')
-            #     squid_ink_orders = self.ink_orders()
-            #     result["SQUID_INK"] = squid_ink_orders
-            # else:
-            #     self.set_context(state.order_depths["SQUID_INK"], fair_value_for_squid_ink, 2, squid_ink_position, 50, 'SQUID_INK')
-            #     squid_ink_orders = self.ink_orders()
-            #     result["SQUID_INK"] = squid_ink_orders
             
-            # self.set_context(state.order_depths["SQUID_INK"], fair_value_for_squid_ink, 2, squid_ink_position, 50, 'SQUID_INK')
-            # squid_ink_orders = self.ink_orders()
-            # result["SQUID_INK"] = squid_ink_orders
-
-            # stop_loss_threshold = 0.2 # 20% stop loss threshold
-            # if fair_value_for_squid_ink is None:
-            #     logger.print("SQUID_INK fair value not available, skipping stop loss logic")
-            # else:
-            #     entry_price = traderObject.get("squid_ink_entry_price", fair_value_for_squid_ink)
-            #     if "squid_ink_entry_price" not in traderObject:
-            #         traderObject["squid_ink_entry_price"] = fair_value_for_squid_ink
-            #     squid_ink_position = state.position.get("SQUID_INK", 0)
-                
-            #     # Calculate average price trend using fair_value_for_squid_ink as the current average price
-            #     prev_avg_price = traderObject.get("prev_avg_price", fair_value_for_squid_ink)
-            #     current_avg_price = fair_value_for_squid_ink
-            #     traderObject["prev_avg_price"] = current_avg_price
-                
-            #     # For long positions: trigger stop loss if best bid drops below threshold or if the average price shows a downward trend
-            #     if traderObject.get("squid_ink_last_price") is not None:
-            #         if squid_ink_position > 0 and state.order_depths["SQUID_INK"].buy_orders:
-            #             best_bid = traderObject["squid_ink_last_price"]
-            #             if best_bid is not None:
-            #                 long_stop_loss_trigger = False
-            #                 if best_bid < entry_price * (1 - stop_loss_threshold):
-            #                     long_stop_loss_trigger = True
-            #                     reason = f"Best bid {best_bid} is below threshold {entry_price * (1 - stop_loss_threshold)}"
-            #                 elif current_avg_price < prev_avg_price:
-            #                     long_stop_loss_trigger = True
-            #                     reason = f"Average price dropped from {prev_avg_price} to {current_avg_price}"
-            #                 if long_stop_loss_trigger:
-            #                     result.setdefault("SQUID_INK", []).append(Order("SQUID_INK", round(best_bid), -squid_ink_position))
-                    
-                # # For short positions: trigger stop loss if best ask exceeds threshold or if the average price shows an upward trend
-                # if squid_ink_position < 0 and state.order_depths["SQUID_INK"].sell_orders:
-                #     best_ask = min(state.order_depths["SQUID_INK"].sell_orders.keys())
-                #     if best_ask is not None:
-                #         short_stop_loss_trigger = False
-                #         if best_ask > entry_price * (1 + stop_loss_threshold):
-                #             short_stop_loss_trigger = True
-                #             reason = f"Best ask {best_ask} is above threshold {entry_price * (1 + stop_loss_threshold)}"
-                #         elif current_avg_price > prev_avg_price:
-                #             short_stop_loss_trigger = True
-                #             reason = f"Average price increased from {prev_avg_price} to {current_avg_price}"
-                #         if short_stop_loss_trigger:
-                #             result.setdefault("SQUID_INK", []).append(Order("SQUID_INK", round(best_ask), -squid_ink_position))
         logger.print("position:",self.position)
         # traderData and conversions could be used for logging or further processing
         traderData = jsonpickle.encode(traderObject)
