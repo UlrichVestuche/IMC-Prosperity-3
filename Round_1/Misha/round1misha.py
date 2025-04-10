@@ -144,7 +144,7 @@ class Trader:
         self.process_market_orders(orders)
 
         # Adjust orders based on current position to ensure compliance with position limits.
-        self.clear_position_order(orders)
+        #self.clear_position_order(orders)
 
         # Define a spread to determine acceptable price boundaries for trading decisions.
         spread = 2
@@ -198,8 +198,8 @@ class Trader:
 
                     # delete if empty
                     self.order_depth.sell_orders[best_ask] += quantity
-                    #if self.order_depth.sell_orders[best_ask] == 0:
-                    #        del self.order_depth.sell_orders[best_ask]
+                    if self.order_depth.sell_orders[best_ask] == 0:
+                           del self.order_depth.sell_orders[best_ask]
                     logger.print('I found good buy price:', best_ask, "fair:",self.fair_value, 'quantity:', quantity)
         # Process buy orders: evaluate if the best bid is favorable
         if len(self.order_depth.buy_orders) != 0:
@@ -215,8 +215,8 @@ class Trader:
 
                     # delete if empty
                     self.order_depth.buy_orders[best_bid] -= quantity
-                    #if self.order_depth.buy_orders[best_bid] == 0:
-                    #        del self.order_depth.buy_orders[best_bid]
+                    if self.order_depth.buy_orders[best_bid] == 0:
+                           del self.order_depth.buy_orders[best_bid]
                     logger.print('I found good sell price:', best_bid, "fair:", self.fair_value, 'quantity:', quantity)
         
 
@@ -286,8 +286,8 @@ class Trader:
             ### Declare them in class??
             ## Filter and decay
             adverse_volume = 12
-            beta = -0.2143
-            #beta = 0
+            #beta = -0.2143
+            beta = 0
             
 
             best_ask = min(order_depth.sell_orders.keys())
@@ -336,12 +336,12 @@ class Trader:
         orders: List[Order] = []
         # Process market orders for KELP using the instrument parameter
         #self.clear_position_order(orders)
-        self.process_market_orders(orders, instrument="KELP")
+        #self.process_market_orders(orders, instrument="KELP")
 
-        self.clear_position_order(orders)
+        #self.clear_position_order(orders)
 
 
-        soft_position_limit = 47
+        soft_position_limit = 50
         hard_position_limit = 50
         spread = 1.5
         insert = 1
@@ -526,17 +526,90 @@ class Trader:
         if mm_ask is None or mm_bid is None:
             return orders
 
-        
-        if self.position >= -1 and Z_score > 1.5:
-            orders.append(Order("SQUID_INK", mm_bid, -10))
+        if Z_score > 1.5:
+            orders.append(Order("SQUID_INK", math.ceil(self.fair_value) , -15))
             logger.print('Trying to market make with sell:',mm_bid, "sell quantity:", 20)
-        elif self.position <= 1 and Z_score < -1.5:
-            orders.append(Order("SQUID_INK", mm_ask, +10))
+        elif Z_score < -1.5:
+            orders.append(Order("SQUID_INK", math.floor(self.fair_value), +15))
             logger.print('Trying to market make with buy:', mm_ask, "buy quantity:", 20)
+        # if self.position >= -1 and Z_score > 1.5:
+        #     orders.append(Order("SQUID_INK", mm_bid, -30))
+        #     logger.print('Trying to market make with sell:',mm_bid, "sell quantity:", 20)
+        # elif self.position <= 1 and Z_score < -1.5:
+        #     orders.append(Order("SQUID_INK", mm_ask, +30))
+        #     logger.print('Trying to market make with buy:', mm_ask, "buy quantity:", 20)
         
         
       
         logger.print('Z_score:', Z_score)
+        return orders
+
+    def resin_ord(self, state: TradingState) -> List[Order]:
+        product = "RAINFOREST_RESIN"
+        pos_limit = 50
+        fairprice = 10000
+        orders = []
+
+        # Get current position for product, defaulting to 0 if not present
+        position = state.position[product] if product in state.position else 0
+
+        buy_ord = state.order_depths[product].buy_orders
+        sell_ord = state.order_depths[product].sell_orders
+       
+        buy_lst = []
+        sell_lst = []
+        
+        # always positive quantities indicating changes in the current position
+        buy_quantity = 0
+        sell_quantity = 0
+
+        # If there are bids above fair price, sell the maximum possible volume
+        for p in buy_ord:
+            if p > fairprice and pos_limit + position - sell_quantity > 0:
+                sell_amount = min(buy_ord[p], pos_limit + position - sell_quantity)
+                orders.append(Order(product,p,-sell_amount))
+                sell_quantity += sell_amount
+                if sell_amount < buy_ord[p]:
+                    buy_lst.append(p)
+            else:
+                buy_lst.append(p)
+        
+        # If there are asks below fair price, buy the maximum possible volume
+        for p in sell_ord:
+            if p < fairprice and pos_limit - position - buy_quantity > 0:
+                buy_amount = min(-sell_ord[p], pos_limit - position - buy_quantity)
+                orders.append(Order(product,p,buy_amount))
+                buy_quantity += buy_amount
+                if buy_amount < -sell_ord[p]:
+                    sell_lst.append(p)
+            else:
+                sell_lst.append(p)
+
+        # If all available positions were closed, put out Orders at maximum profit
+        if not buy_lst and pos_limit - position - buy_quantity > 0:
+            bid_amount = pos_limit - position - buy_quantity
+            orders.append(Order(product,1,bid_amount))
+
+        if not sell_lst and pos_limit + position - sell_quantity > 0:
+            ask_amount = pos_limit + position - sell_quantity
+            orders.append(Order(product,20000,-ask_amount))
+        
+        # Determine the maximum bid and minimum ask after we executed all profitable trades
+        bid_max = max(buy_lst)
+        ask_min = min(sell_lst)
+
+        # Place competitive bids
+        if bid_max < fairprice - 1 and pos_limit - position - buy_quantity > 0:
+            bid_price = bid_max + 1
+            bid_amount = pos_limit - position - buy_quantity
+            orders.append(Order(product,bid_price,bid_amount))
+        
+        # Place competitive asks
+        if ask_min > fairprice + 1 and pos_limit + position - sell_quantity > 0:
+            ask_price = ask_min - 1
+            ask_amount = pos_limit + position - sell_quantity
+            orders.append(Order(product,ask_price,-ask_amount))
+        
         return orders
     def run(self, state: TradingState):
         # Main execution method called during each trading cycle
@@ -553,13 +626,14 @@ class Trader:
 
         # Check if RAINFOREST_RESIN is available in the current market data
         if "RAINFOREST_RESIN" in state.order_depths:
-            # Get current position for RAINFOREST_RESIN, defaulting to 0 if not present
-            resin_position = state.position["RAINFOREST_RESIN"] if "RAINFOREST_RESIN" in state.position else 0
-            # Set up the trading context with the latest market data and parameters
-            self.set_context(state.order_depths["RAINFOREST_RESIN"], 10000, 2, resin_position, 50, "RAINFOREST_RESIN")
-            # Generate trading orders for RAINFOREST_RESIN
-            resin_orders = self.resin_orders()
-            result["RAINFOREST_RESIN"] = resin_orders
+            # # Get current position for RAINFOREST_RESIN, defaulting to 0 if not present
+            # resin_position = state.position["RAINFOREST_RESIN"] if "RAINFOREST_RESIN" in state.position else 0
+            # # Set up the trading context with the latest market data and parameters
+            # self.set_context(state.order_depths["RAINFOREST_RESIN"], 10000, 2, resin_position, 50, "RAINFOREST_RESIN")
+            # # Generate trading orders for RAINFOREST_RESIN
+            # resin_orders = self.resin_orders()
+            # result["RAINFOREST_RESIN"] = resin_orders
+            result["RAINFOREST_RESIN"] = self.resin_ord(state) 
 
 
         if "KELP" in state.order_depths:
