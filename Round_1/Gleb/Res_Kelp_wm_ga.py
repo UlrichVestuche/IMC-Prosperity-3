@@ -150,11 +150,11 @@ class Trader:
         # If all available positions were closed, put out Orders at maximum profit
         if not buy_lst and pos_limit - position - buy_quantity > 0:
             bid_amount = pos_limit - position - buy_quantity
-            orders.append(Order(product,1,bid_amount))
+            orders.append(Order(product,9998,bid_amount))
 
         if not sell_lst and pos_limit + position - sell_quantity > 0:
             ask_amount = pos_limit + position - sell_quantity
-            orders.append(Order(product,20000,-ask_amount))
+            orders.append(Order(product,10002,-ask_amount))
         
         # Determine the maximum bid and minimum ask after we executed all profitable trades
         bid_max = max(buy_lst)
