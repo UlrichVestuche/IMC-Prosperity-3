@@ -1,11 +1,11 @@
-from datamodel import OrderDepth, UserId, TradingState, Order
+from Round_2.Gleb.datamodel import OrderDepth, UserId, TradingState, Order
 from typing import List
 import string
 import jsonpickle
 import numpy as np
 import math
 import json
-from datamodel import Listing, Observation, Order, OrderDepth, ProsperityEncoder, Symbol, Trade, TradingState
+from Round_2.Gleb.datamodel import Listing, Observation, Order, OrderDepth, ProsperityEncoder, Symbol, Trade, TradingState
 from typing import Any
 
 class Logger:

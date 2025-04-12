@@ -10,7 +10,9 @@ from typing import Any
 
 from datamodel import Listing, Observation, Order, OrderDepth, ProsperityEncoder, Symbol, Trade, TradingState
 
-
+# Global variables
+len_long = 10
+z_max = 1
 class Logger:
     def __init__(self) -> None:
         self.logs = ""
@@ -161,7 +163,7 @@ class Trader:
         #product = "PICNIC_BASKET1"
 
         # window lengths
-        len_long = 100
+        global len_long
         len_short = 1
 
         pb1_mprice = self.r2_mprice(state)["PICNIC_BASKET1"]
@@ -209,6 +211,8 @@ class Trader:
         return dct
 
     def pb1_ord(self, state: TradingState):
+        global z_max
+
         #product = "PICNIC_BASKET1"
         pos_limit = {}
         pos_limit['PICNIC_BASKET1'] = 60
@@ -295,12 +299,12 @@ class Trader:
         bid_factor_pb1 = min(bid_factor['PICNIC_BASKET1'], ask_factor['CROISSANTS'], ask_factor['JAMS'], ask_factor['DJEMBES'])
         ask_factor_pb1 = min(ask_factor['PICNIC_BASKET1'], bid_factor['CROISSANTS'], bid_factor['JAMS'], bid_factor['DJEMBES'])
 
-        if z_val > 1.5 and ask_factor_pb1 > 0:
+        if z_val > z_max and ask_factor_pb1 > 0:
             orders_pb1.append(Order("PICNIC_BASKET1", ask_price['PICNIC_BASKET1'], (-1) * ask_factor_pb1))
             orders_cro.append(Order("CROISSANTS", bid_price['CROISSANTS'], 6 * ask_factor_pb1))
             orders_jam.append(Order("JAMS", bid_price['JAMS'], 3 * ask_factor_pb1))
             orders_djem.append(Order("DJEMBES", bid_price['DJEMBES'], 1 * ask_factor_pb1))
-        elif z_val < -1.5 and bid_factor_pb1 > 0:
+        elif z_val < -z_max and bid_factor_pb1 > 0:
             orders_pb1.append(Order("PICNIC_BASKET1", bid_price['PICNIC_BASKET1'], 1 * bid_factor_pb1))
             orders_cro.append(Order("CROISSANTS", ask_price['CROISSANTS'], (-6) * bid_factor_pb1))
             orders_jam.append(Order("JAMS", ask_price['JAMS'], (-3) * bid_factor_pb1))
@@ -323,6 +327,8 @@ class Trader:
         result["CROISSANTS"] = PB1_dict['cro']
         result["JAMS"] = PB1_dict['jam']
         result["DJEMBES"] = PB1_dict['djem']
+
+        #print(PB1_dict['pb1'],PB1_dict['cro'],PB1_dict['jam'],PB1_dict['djem'])
     
         # String value holding Trader state data required. 
 		# It will be delivered as TradingState.traderData on next execution.
@@ -333,5 +339,6 @@ class Trader:
         conversions = 1
 
         logger.flush(state, result, conversions, traderData)
+
 
         return result, conversions, traderData
