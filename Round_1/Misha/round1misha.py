@@ -611,6 +611,9 @@ class Trader:
             orders.append(Order(product,ask_price,-ask_amount))
         
         return orders
+
+    
+    
     def run(self, state: TradingState):
         # Main execution method called during each trading cycle
         result = {}
