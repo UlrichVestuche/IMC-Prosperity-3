@@ -15,6 +15,7 @@ len_long = 20
 z_max = 1.4
 price_spread = {'PICNIC_BASKET1': 2,'CROISSANTS': 1,'JAMS': 1,'DJEMBES': 1}
 max_factor = 50
+pb1_cutoff = 25
 
 class Logger:
     def __init__(self) -> None:
@@ -217,6 +218,7 @@ class Trader:
         global z_max
         global price_spread
         global max_factor
+        global pb1_cutoff
 
         #product = "PICNIC_BASKET1"
         pos_limit = {}
@@ -304,12 +306,12 @@ class Trader:
         bid_factor_pb1 = min(max_factor,bid_factor['PICNIC_BASKET1'], ask_factor['CROISSANTS'], ask_factor['JAMS'], ask_factor['DJEMBES'])
         ask_factor_pb1 = min(max_factor, ask_factor['PICNIC_BASKET1'], bid_factor['CROISSANTS'], bid_factor['JAMS'], bid_factor['DJEMBES'])
 
-        if z_val > z_max and ask_factor_pb1 > 0:
+        if z_val > z_max and ask_factor_pb1 > 0 and pos['PICNIC_BASKET1'] > - pb1_cutoff:
             orders_pb1.append(Order("PICNIC_BASKET1", ask_price['PICNIC_BASKET1'], (-1) * ask_factor_pb1))
             orders_cro.append(Order("CROISSANTS", bid_price['CROISSANTS'], 6 * ask_factor_pb1))
             orders_jam.append(Order("JAMS", bid_price['JAMS'], 3 * ask_factor_pb1))
             orders_djem.append(Order("DJEMBES", bid_price['DJEMBES'], 1 * ask_factor_pb1))
-        elif z_val < -z_max and bid_factor_pb1 > 0:
+        elif z_val < -z_max and bid_factor_pb1 > 0 and pos['PICNIC_BASKET1'] < pb1_cutoff:
             orders_pb1.append(Order("PICNIC_BASKET1", bid_price['PICNIC_BASKET1'], 1 * bid_factor_pb1))
             orders_cro.append(Order("CROISSANTS", ask_price['CROISSANTS'], (-6) * bid_factor_pb1))
             orders_jam.append(Order("JAMS", ask_price['JAMS'], (-3) * bid_factor_pb1))
