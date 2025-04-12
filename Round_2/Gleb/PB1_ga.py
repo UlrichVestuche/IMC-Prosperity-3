@@ -11,8 +11,10 @@ from typing import Any
 from datamodel import Listing, Observation, Order, OrderDepth, ProsperityEncoder, Symbol, Trade, TradingState
 
 # Global variables
-len_long = 10
-z_max = 1
+len_long = 30
+z_max = 2
+price_spread = 2
+
 class Logger:
     def __init__(self) -> None:
         self.logs = ""
@@ -212,6 +214,7 @@ class Trader:
 
     def pb1_ord(self, state: TradingState):
         global z_max
+        global price_spread
 
         #product = "PICNIC_BASKET1"
         pos_limit = {}
@@ -275,7 +278,7 @@ class Trader:
             buy_prices = []
 
             for p in buy_ord:
-                if p >= fprice[prod] - 2:
+                if p >= fprice[prod] - price_spread:
                     sell_available += buy_ord[p]
                     ask_prices.append(p)
 
@@ -283,7 +286,7 @@ class Trader:
                 ask_price[prod] = ask_prices[-1]
             
             for p in sell_ord:
-                if p <= fprice[prod] + 2:
+                if p <= fprice[prod] + price_spread:
                     buy_available -= sell_ord[p]
                     buy_prices.append(p)
             
