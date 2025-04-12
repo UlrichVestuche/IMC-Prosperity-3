@@ -5,6 +5,128 @@ import numpy as np
 import math
 import jsonpickle
 
+import json
+from typing import Any
+
+from datamodel import Listing, Observation, Order, OrderDepth, ProsperityEncoder, Symbol, Trade, TradingState
+
+
+class Logger:
+    def __init__(self) -> None:
+        self.logs = ""
+        self.max_log_length = 3750
+
+    def print(self, *objects: Any, sep: str = " ", end: str = "\n") -> None:
+        self.logs += sep.join(map(str, objects)) + end
+
+    def flush(self, state: TradingState, orders: dict[Symbol, list[Order]], conversions: int, trader_data: str) -> None:
+        base_length = len(
+            self.to_json(
+                [
+                    self.compress_state(state, ""),
+                    self.compress_orders(orders),
+                    conversions,
+                    "",
+                    "",
+                ]
+            )
+        )
+
+        # We truncate state.traderData, trader_data, and self.logs to the same max. length to fit the log limit
+        max_item_length = (self.max_log_length - base_length) // 3
+
+        print(
+            self.to_json(
+                [
+                    self.compress_state(state, self.truncate(state.traderData, max_item_length)),
+                    self.compress_orders(orders),
+                    conversions,
+                    self.truncate(trader_data, max_item_length),
+                    self.truncate(self.logs, max_item_length),
+                ]
+            )
+        )
+
+        self.logs = ""
+
+    def compress_state(self, state: TradingState, trader_data: str) -> list[Any]:
+        return [
+            state.timestamp,
+            trader_data,
+            self.compress_listings(state.listings),
+            self.compress_order_depths(state.order_depths),
+            self.compress_trades(state.own_trades),
+            self.compress_trades(state.market_trades),
+            state.position,
+            self.compress_observations(state.observations),
+        ]
+
+    def compress_listings(self, listings: dict[Symbol, Listing]) -> list[list[Any]]:
+        compressed = []
+        for listing in listings.values():
+            compressed.append([listing.symbol, listing.product, listing.denomination])
+
+        return compressed
+
+    def compress_order_depths(self, order_depths: dict[Symbol, OrderDepth]) -> dict[Symbol, list[Any]]:
+        compressed = {}
+        for symbol, order_depth in order_depths.items():
+            compressed[symbol] = [order_depth.buy_orders, order_depth.sell_orders]
+
+        return compressed
+
+    def compress_trades(self, trades: dict[Symbol, list[Trade]]) -> list[list[Any]]:
+        compressed = []
+        for arr in trades.values():
+            for trade in arr:
+                compressed.append(
+                    [
+                        trade.symbol,
+                        trade.price,
+                        trade.quantity,
+                        trade.buyer,
+                        trade.seller,
+                        trade.timestamp,
+                    ]
+                )
+
+        return compressed
+
+    def compress_observations(self, observations: Observation) -> list[Any]:
+        conversion_observations = {}
+        for product, observation in observations.conversionObservations.items():
+            conversion_observations[product] = [
+                observation.bidPrice,
+                observation.askPrice,
+                observation.transportFees,
+                observation.exportTariff,
+                observation.importTariff,
+                observation.sugarPrice,
+                observation.sunlightIndex,
+            ]
+
+        return [observations.plainValueObservations, conversion_observations]
+
+    def compress_orders(self, orders: dict[Symbol, list[Order]]) -> list[list[Any]]:
+        compressed = []
+        for arr in orders.values():
+            for order in arr:
+                compressed.append([order.symbol, order.price, order.quantity])
+
+        return compressed
+
+    def to_json(self, value: Any) -> str:
+        return json.dumps(value, cls=ProsperityEncoder, separators=(",", ":"))
+
+    def truncate(self, value: str, max_length: int) -> str:
+        if len(value) <= max_length:
+            return value
+
+        return value[: max_length - 3] + "..."
+
+
+logger = Logger()
+
 class Trader:
 
     def r2_mprice(self, state: TradingState):
@@ -39,7 +161,7 @@ class Trader:
         #product = "PICNIC_BASKET1"
 
         # window lengths
-        len_long = 5
+        len_long = 100
         len_short = 1
 
         pb1_mprice = self.r2_mprice(state)["PICNIC_BASKET1"]
@@ -88,10 +210,11 @@ class Trader:
 
     def pb1_ord(self, state: TradingState):
         #product = "PICNIC_BASKET1"
-        pos_limit_pb1 = 60
-        pos_limit_cro = 250
-        pos_limit_jam = 350
-        pos_limit_djem = 60
+        pos_limit = {}
+        pos_limit['PICNIC_BASKET1'] = 60
+        pos_limit['CROISSANTS'] = 250
+        pos_limit['JAMS'] = 350
+        pos_limit['DJEMBES'] = 60
 
         orders_pb1 = []
         orders_cro = []
@@ -99,10 +222,11 @@ class Trader:
         orders_djem = []
 
         # Get current position for product, defaulting to 0 if not present
-        pos_pb1 = state.position["PICNIC_BASKET1"] if "PICNIC_BASKET1" in state.position else 0
-        pos_cro = state.position["CROISSANTS"] if "CROISSANTS" in state.position else 0
-        pos_jam = state.position["JAMS"] if "JAMS" in state.position else 0
-        pos_djem = state.position["DJEMBES"] if "DJEMBES" in state.position else 0
+        pos = {}
+        pos['PICNIC_BASKET1'] = state.position["PICNIC_BASKET1"] if "PICNIC_BASKET1" in state.position else 0
+        pos['CROISSANTS'] = state.position["CROISSANTS"] if "CROISSANTS" in state.position else 0
+        pos['JAMS'] = state.position["JAMS"] if "JAMS" in state.position else 0
+        pos['DJEMBES'] = state.position["DJEMBES"] if "DJEMBES" in state.position else 0
 
         # Decode the dictionary with the spread
         if state.traderData:
@@ -120,82 +244,67 @@ class Trader:
         djem_mprice = self.r2_mprice(state)["DJEMBES"]
 
         # Define fair prices
-        fprice = {'pb1': pb1_mprice,'cro': cro_mprice,'jam': jam_mprice,'djem': djem_mprice}
-
-        # Define prices just above and just below fair prices
-        #above_fprice = {}
-        #below_fprice = {}
-
-        #for prod in fprice:
-        #    if fprice[prod].is_integer():
-        #        above_fprice[prod] = int(fprice[prod])
-        #        below_fprice[prod] = int(fprice[prod])
-        #    else:
-        #        above_fprice[prod] = math.ceil(fprice[prod])
-        #        below_fprice[prod] = math.floor(fprice[prod])
+        fprice = {'PICNIC_BASKET1': pb1_mprice,'CROISSANTS': cro_mprice,'JAMS': jam_mprice,'DJEMBES': djem_mprice}
 
         # Import the z value
         z_val = dict_spread1['zscore']
 
         # Define the bid factors
-        bid_amount_pb1 = pos_limit_pb1 - pos_pb1
-        bid_amount_cro = pos_limit_cro - pos_cro
-        bid_amount_jam = pos_limit_jam - pos_jam
-        bid_amount_djem = pos_limit_djem - pos_djem
-
-        ask_amount_pb1 = pos_limit_pb1 + pos_pb1
-        ask_amount_cro = pos_limit_cro + pos_cro
-        ask_amount_jam = pos_limit_jam + pos_jam
-        ask_amount_djem = pos_limit_djem + pos_djem
-
-        bid_factor_pb1 = int(bid_amount_pb1 / 10)
-        bid_factor_cro = int(bid_amount_cro / 6)
-        bid_factor_jam = int(bid_amount_jam / 3)
-        bid_factor_djem = int(bid_amount_djem)
-
-        ask_factor_pb1 = int(ask_amount_pb1 / 10)
-        ask_factor_cro = int(ask_amount_cro / 6)
-        ask_factor_jam = int(ask_amount_jam / 3)
-        ask_factor_djem = int(ask_amount_djem)
-
-        bid_factor_pb1 = min(bid_factor_pb1, ask_factor_cro, ask_factor_jam, ask_factor_djem)
-        ask_factor_pb1 = min(ask_factor_pb1, bid_factor_cro, bid_factor_jam, bid_factor_djem)
+        bid_amount = {}
+        ask_amount = {}
+        bid_factor = {}
+        ask_factor = {}
+        ratios = {'PICNIC_BASKET1': 1,'CROISSANTS': 6,'JAMS': 3,'DJEMBES': 1}
 
         # Determine the bid price depending on the needed quantity
-        ratios = {'pb1': 10,'cro': 6,'jam': 3,'djem': 1}
+        ask_price = {}
+        bid_price = {}
 
         for prod in fprice:
+            sell_available = 0
+            buy_available = 0
+
             buy_ord = state.order_depths[prod].buy_orders
             sell_ord = state.order_depths[prod].sell_orders
-
-            if prod == 'pb1':
-                bid_qneed = ratios[prod] * bid_factor_pb1
-                ask_qneed = ratios[prod] * ask_factor_pb1
-            else:
-                bid_qneed = ratios[prod] * ask_factor_pb1
-                ask_qneed = ratios[prod] * bid_factor_pb1
+            
+            ask_prices = []
+            buy_prices = []
 
             for p in buy_ord:
-                if p > fairprice and pos_limit + position - sell_quantity > 0:
-                    sell_amount = min(buy_ord[p], pos_limit + position - sell_quantity)
-                    orders.append(Order(product,p,-sell_amount))
-                    sell_quantity += sell_amount
-                    if sell_amount < buy_ord[p]:
-                        buy_lst.append(p)
-                else:
-                    buy_lst.append(p)
+                if p >= fprice[prod] - 2:
+                    sell_available += buy_ord[p]
+                    ask_prices.append(p)
 
+            if ask_prices:
+                ask_price[prod] = ask_prices[-1]
+            
+            for p in sell_ord:
+                if p <= fprice[prod] + 2:
+                    buy_available -= sell_ord[p]
+                    buy_prices.append(p)
+            
+            if buy_prices:
+                bid_price[prod] = buy_prices[-1]
 
-        if z_val > 1 and ask_factor_pb1 > 0:
-            orders_pb1.append(Order("PICNIC_BASKET1", above_fprice['pb1'], (-10) * ask_factor_pb1))
-            orders_cro.append(Order("CROISSANTS", below_fprice['cro'], 6 * ask_factor_pb1))
-            orders_jam.append(Order("JAMS", below_fprice['jam'], 3 * ask_factor_pb1))
-            orders_djem.append(Order("DJEMBES", below_fprice['djem'], 1 * ask_factor_pb1))
-        elif z_val < -1 and bid_factor_pb1 > 0:
-            orders_pb1.append(Order("PICNIC_BASKET1", below_fprice['pb1'], 10 * bid_factor_pb1))
-            orders_cro.append(Order("CROISSANTS", above_fprice['cro'], (-6) * bid_factor_pb1))
-            orders_jam.append(Order("JAMS", above_fprice['jam'], (-3) * bid_factor_pb1))
-            orders_djem.append(Order("DJEMBES", above_fprice['djem'], (-1) * bid_factor_pb1))
+            bid_amount[prod] = min(pos_limit[prod] - pos[prod], buy_available)
+            ask_amount[prod] = min(pos_limit[prod] + pos[prod], sell_available)
+
+            bid_factor[prod] = int(bid_amount[prod] / ratios[prod])
+            ask_factor[prod] = int(ask_amount[prod] / ratios[prod])
+
+        bid_factor_pb1 = min(bid_factor['PICNIC_BASKET1'], ask_factor['CROISSANTS'], ask_factor['JAMS'], ask_factor['DJEMBES'])
+        ask_factor_pb1 = min(ask_factor['PICNIC_BASKET1'], bid_factor['CROISSANTS'], bid_factor['JAMS'], bid_factor['DJEMBES'])
+
+        if z_val > 1.5 and ask_factor_pb1 > 0:
+            orders_pb1.append(Order("PICNIC_BASKET1", ask_price['PICNIC_BASKET1'], (-1) * ask_factor_pb1))
+            orders_cro.append(Order("CROISSANTS", bid_price['CROISSANTS'], 6 * ask_factor_pb1))
+            orders_jam.append(Order("JAMS", bid_price['JAMS'], 3 * ask_factor_pb1))
+            orders_djem.append(Order("DJEMBES", bid_price['DJEMBES'], 1 * ask_factor_pb1))
+        elif z_val < -1.5 and bid_factor_pb1 > 0:
+            orders_pb1.append(Order("PICNIC_BASKET1", bid_price['PICNIC_BASKET1'], 1 * bid_factor_pb1))
+            orders_cro.append(Order("CROISSANTS", ask_price['CROISSANTS'], (-6) * bid_factor_pb1))
+            orders_jam.append(Order("JAMS", ask_price['JAMS'], (-3) * bid_factor_pb1))
+            orders_djem.append(Order("DJEMBES", ask_price['DJEMBES'], (-1) * bid_factor_pb1))
         
         return {'pb1': orders_pb1, 'cro': orders_cro,'jam': orders_jam, 'djem': orders_djem, 'Dict_Spread1': dict_spread1}
     
@@ -214,9 +323,6 @@ class Trader:
         result["CROISSANTS"] = PB1_dict['cro']
         result["JAMS"] = PB1_dict['jam']
         result["DJEMBES"] = PB1_dict['djem']
-
-        print(PB1_dict['cro'])
-    
     
         # String value holding Trader state data required. 
 		# It will be delivered as TradingState.traderData on next execution.
@@ -225,5 +331,7 @@ class Trader:
 
 		# Sample conversion request.
         conversions = 1
+
+        logger.flush(state, result, conversions, traderData)
 
         return result, conversions, traderData
