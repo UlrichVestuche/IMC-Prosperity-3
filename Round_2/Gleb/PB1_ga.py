@@ -11,9 +11,10 @@ from typing import Any
 from datamodel import Listing, Observation, Order, OrderDepth, ProsperityEncoder, Symbol, Trade, TradingState
 
 # Global variables
-len_long = 30
-z_max = 2
-price_spread = 2
+len_long = 20
+z_max = 1.4
+price_spread = {'PICNIC_BASKET1': 2,'CROISSANTS': 1,'JAMS': 1,'DJEMBES': 1}
+max_factor = 50
 
 class Logger:
     def __init__(self) -> None:
@@ -215,6 +216,7 @@ class Trader:
     def pb1_ord(self, state: TradingState):
         global z_max
         global price_spread
+        global max_factor
 
         #product = "PICNIC_BASKET1"
         pos_limit = {}
@@ -278,7 +280,7 @@ class Trader:
             buy_prices = []
 
             for p in buy_ord:
-                if p >= fprice[prod] - price_spread:
+                if p >= fprice[prod] - price_spread[prod]:
                     sell_available += buy_ord[p]
                     ask_prices.append(p)
 
@@ -286,7 +288,7 @@ class Trader:
                 ask_price[prod] = ask_prices[-1]
             
             for p in sell_ord:
-                if p <= fprice[prod] + price_spread:
+                if p <= fprice[prod] + price_spread[prod]:
                     buy_available -= sell_ord[p]
                     buy_prices.append(p)
             
@@ -299,8 +301,8 @@ class Trader:
             bid_factor[prod] = int(bid_amount[prod] / ratios[prod])
             ask_factor[prod] = int(ask_amount[prod] / ratios[prod])
 
-        bid_factor_pb1 = min(bid_factor['PICNIC_BASKET1'], ask_factor['CROISSANTS'], ask_factor['JAMS'], ask_factor['DJEMBES'])
-        ask_factor_pb1 = min(ask_factor['PICNIC_BASKET1'], bid_factor['CROISSANTS'], bid_factor['JAMS'], bid_factor['DJEMBES'])
+        bid_factor_pb1 = min(max_factor,bid_factor['PICNIC_BASKET1'], ask_factor['CROISSANTS'], ask_factor['JAMS'], ask_factor['DJEMBES'])
+        ask_factor_pb1 = min(max_factor, ask_factor['PICNIC_BASKET1'], bid_factor['CROISSANTS'], bid_factor['JAMS'], bid_factor['DJEMBES'])
 
         if z_val > z_max and ask_factor_pb1 > 0:
             orders_pb1.append(Order("PICNIC_BASKET1", ask_price['PICNIC_BASKET1'], (-1) * ask_factor_pb1))
