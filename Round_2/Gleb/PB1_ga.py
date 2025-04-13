@@ -11,11 +11,13 @@ from typing import Any
 from datamodel import Listing, Observation, Order, OrderDepth, ProsperityEncoder, Symbol, Trade, TradingState
 
 # Global variables
-len_long = 500
-z_max = 1.9
-price_spread = {'PICNIC_BASKET1': 2,'CROISSANTS': 1,'JAMS': 1,'DJEMBES': 1}
-max_factor = 50
-pb1_cutoff = 25
+len_long1 = 300
+z_max1 = 1.5
+
+len_long2 = 100
+z_max2 = 1.5
+
+price_spread = {'PICNIC_BASKET1': 2,'PICNIC_BASKET2': 2,'CROISSANTS': 1,'JAMS': 1,'DJEMBES': 1}
 
 class Logger:
     def __init__(self) -> None:
@@ -163,55 +165,76 @@ class Trader:
 
         return mid_price
     
-    def pb1_spread(self, state: TradingState, dct):
-        #product = "PICNIC_BASKET1"
-
+    def pb_spread(self, state: TradingState, dct):
         # window lengths
-        global len_long
+        global len_long1
+        global len_long2
         
-        alpha = 1/ len_long
+        alpha1 = 1/ len_long1
+        alpha2 = 1/ len_long2
 
         pb1_mprice = self.r2_mprice(state)["PICNIC_BASKET1"]
+        pb2_mprice = self.r2_mprice(state)["PICNIC_BASKET2"]
         cro_mprice = self.r2_mprice(state)["CROISSANTS"]
         jam_mprice = self.r2_mprice(state)["JAMS"]
         djem_mprice = self.r2_mprice(state)["DJEMBES"]
 
-        synth_mprice = 6 * cro_mprice + 3 * jam_mprice + djem_mprice
-        spread_price = pb1_mprice - synth_mprice
+        synth_mprice1 = 6 * cro_mprice + 3 * jam_mprice + djem_mprice
+        spread_price1 = pb1_mprice - synth_mprice1
 
+        synth_mprice2 = 4 * cro_mprice + 2 * jam_mprice
+        spread_price2 = pb2_mprice - synth_mprice2
 
-        win_average = dct['average']
-        win_stdev = dct['stdev']
+        win_average1 = dct['average1']
+        win_stdev1 = dct['stdev1']
 
-        win_average = (1 - alpha) * win_average + alpha * spread_price
+        win_average2 = dct['average2']
+        win_stdev2 = dct['stdev2']
 
-        win_stdev = math.sqrt((1 - alpha) * win_stdev**2 + alpha * (spread_price-win_average)**2)
+        win_average1 = (1 - alpha1) * win_average1 + alpha1 * spread_price1
+        win_stdev1 = math.sqrt((1 - alpha1) * win_stdev1**2 + alpha1 * (spread_price1 - win_average1)**2)
 
-        if win_stdev:
-            z_val = (spread_price - win_average) / win_stdev
+        win_average2 = (1 - alpha2) * win_average2 + alpha2 * spread_price2
+        win_stdev2 = math.sqrt((1 - alpha2) * win_stdev2**2 + alpha2 * (spread_price2 - win_average2)**2)
+
+        if win_stdev1:
+            z_val1 = (spread_price1 - win_average1) / win_stdev1
         else:
-            z_val = 0
+            z_val1 = 0
 
-        dct['average'] = win_average
-        dct['stdev'] = win_stdev
-        dct['zscore'] = z_val
+        if win_stdev2:
+            z_val2 = (spread_price2 - win_average2) / win_stdev2
+        else:
+            z_val2 = 0
+
+        dct['average1'] = win_average1
+        dct['stdev1'] = win_stdev1
+        dct['zscore1'] = z_val1
+        dct['average2'] = win_average2
+        dct['stdev2'] = win_stdev2
+        dct['zscore2'] = z_val2
+
 
         return dct
-
-    def pb1_ord(self, state: TradingState):
-        global z_max
+    
+    def pb_ord(self, state: TradingState):
+        global z_max1
+        global z_max2
         global price_spread
         global max_factor
         global pb1_cutoff
+        global pb2_cutoff
 
-        #product = "PICNIC_BASKET1"
+        products = ["PICNIC_BASKET1","PICNIC_BASKET2","CROISSANTS","JAMS","DJEMBES"]
         pos_limit = {}
         pos_limit['PICNIC_BASKET1'] = 60
+        pos_limit['PICNIC_BASKET2'] = 100
         pos_limit['CROISSANTS'] = 250
         pos_limit['JAMS'] = 350
         pos_limit['DJEMBES'] = 60
 
         orders_pb1 = []
+        orders_pb2 = []
         orders_cro = []
         orders_jam = []
         orders_djem = []
@@ -219,47 +242,55 @@ class Trader:
         # Get current position for product, defaulting to 0 if not present
         pos = {}
         pos['PICNIC_BASKET1'] = state.position["PICNIC_BASKET1"] if "PICNIC_BASKET1" in state.position else 0
+        pos['PICNIC_BASKET2'] = state.position["PICNIC_BASKET2"] if "PICNIC_BASKET2" in state.position else 0
         pos['CROISSANTS'] = state.position["CROISSANTS"] if "CROISSANTS" in state.position else 0
         pos['JAMS'] = state.position["JAMS"] if "JAMS" in state.position else 0
         pos['DJEMBES'] = state.position["DJEMBES"] if "DJEMBES" in state.position else 0
 
         # Decode the dictionary with the spread
         if state.traderData:
-            dict_spread1_prev = jsonpickle.decode(state.traderData)
+            dict_spreads_prev = jsonpickle.decode(state.traderData)
         else:
-            dict_spread1_prev = {'zscore': 0,'fprices': {},'average': 0, 'stdev': 0,'z_index': 0}
+            dict_spreads_prev = {'zscore1': 0,'average1': 0, 'stdev1': 0,'zscore2': 0,'average2': 0, 'stdev2': 0}
 
         # Update the dictionary with the current state
-        dict_spread1 = self.pb1_spread(state, dict_spread1_prev)
+        dict_spreads = self.pb_spread(state, dict_spreads_prev)
 
         # Define mid prices for all products
         pb1_mprice = self.r2_mprice(state)["PICNIC_BASKET1"]
+        pb2_mprice = self.r2_mprice(state)["PICNIC_BASKET2"]
         cro_mprice = self.r2_mprice(state)["CROISSANTS"]
         jam_mprice = self.r2_mprice(state)["JAMS"]
         djem_mprice = self.r2_mprice(state)["DJEMBES"]
 
         # Define fair prices
-        fprice = {'PICNIC_BASKET1': pb1_mprice,'CROISSANTS': cro_mprice,'JAMS': jam_mprice,'DJEMBES': djem_mprice}
-        dict_spread1['fprices'] = fprice
+        fprice = {'PICNIC_BASKET1': pb1_mprice,'PICNIC_BASKET2': pb2_mprice,'CROISSANTS': cro_mprice,'JAMS': jam_mprice,'DJEMBES': djem_mprice}
 
-        # Import z value and index
-        z_val = dict_spread1['zscore']
-        z_ind = dict_spread1['z_index']
+        # Import z values
+        z_val1 = dict_spreads['zscore1']
+        z_val2 = dict_spreads['zscore2']
 
         # Define the bid factors
         bid_amount = {}
         ask_amount = {}
+        bid_amount2 = {}
+        ask_amount2 = {}
         bid_factor = {}
         ask_factor = {}
-        ratios = {'PICNIC_BASKET1': 1,'CROISSANTS': 6,'JAMS': 3,'DJEMBES': 1}
+        bid_factor2 = {}
+        ask_factor2 = {}
+        ratios1 = {'PICNIC_BASKET1': 1,'CROISSANTS': 6,'JAMS': 3,'DJEMBES': 1}
+        ratios2 = {'PICNIC_BASKET2': 1,'CROISSANTS': 4,'JAMS': 2}
 
         # Determine the bid price depending on the needed quantity
         ask_price = {}
         bid_price = {}
+        sell_available = {}
+        buy_available = {}
 
-        for prod in fprice:
-            sell_available = 0
-            buy_available = 0
+        for prod in products:
+            sell_available[prod] = 0
+            buy_available[prod] = 0
 
             buy_ord = state.order_depths[prod].buy_orders
             sell_ord = state.order_depths[prod].sell_orders
@@ -269,7 +300,7 @@ class Trader:
 
             for p in buy_ord:
                 if p >= fprice[prod] - price_spread[prod]:
-                    sell_available += buy_ord[p]
+                    sell_available[prod] += buy_ord[p]
                     ask_prices.append(p)
 
             if ask_prices:
@@ -277,40 +308,59 @@ class Trader:
             
             for p in sell_ord:
                 if p <= fprice[prod] + price_spread[prod]:
-                    buy_available -= sell_ord[p]
+                    buy_available[prod] -= sell_ord[p]
                     buy_prices.append(p)
             
             if buy_prices:
                 bid_price[prod] = buy_prices[-1]
 
-            bid_amount[prod] = min(pos_limit[prod] - pos[prod], buy_available)
-            ask_amount[prod] = min(pos_limit[prod] + pos[prod], sell_available)
+        for prod in ratios1:
+            bid_amount[prod] = min(pos_limit[prod] - pos[prod], buy_available[prod])
+            ask_amount[prod] = min(pos_limit[prod] + pos[prod], sell_available[prod])
 
-            bid_factor[prod] = int(bid_amount[prod] / ratios[prod])
-            ask_factor[prod] = int(ask_amount[prod] / ratios[prod])
+            bid_factor[prod] = int(bid_amount[prod] / ratios1[prod])
+            ask_factor[prod] = int(ask_amount[prod] / ratios1[prod])
 
-        bid_factor_pb1 = min(max_factor,bid_factor['PICNIC_BASKET1'], ask_factor['CROISSANTS'], ask_factor['JAMS'], ask_factor['DJEMBES'])
-        ask_factor_pb1 = min(max_factor, ask_factor['PICNIC_BASKET1'], bid_factor['CROISSANTS'], bid_factor['JAMS'], bid_factor['DJEMBES'])
+        # bid_factor_pb1 = min(bid_factor['PICNIC_BASKET1'], ask_factor['CROISSANTS'], ask_factor['JAMS'], ask_factor['DJEMBES'])
+        # ask_factor_pb1 = min(ask_factor['PICNIC_BASKET1'], bid_factor['CROISSANTS'], bid_factor['JAMS'], bid_factor['DJEMBES'])
 
-        logger.print('Bid factors pb1, cro, jams, djem: ',bid_factor['PICNIC_BASKET1'], ask_factor['CROISSANTS'], ask_factor['JAMS'], ask_factor['DJEMBES'])
-        logger.print('Ask factors pb1, cro, jams, djem: ',ask_factor['PICNIC_BASKET1'], bid_factor['CROISSANTS'], bid_factor['JAMS'], bid_factor['DJEMBES'])
+        # if z_val1 > z_max1 and ask_factor_pb1 > 0: #and pos['PICNIC_BASKET1'] > - pb1_cutoff:
+        #    orders_pb1.append(Order("PICNIC_BASKET1", ask_price['PICNIC_BASKET1'], (-1) * ask_factor_pb1))
+        #    orders_cro.append(Order("CROISSANTS", bid_price['CROISSANTS'], 6 * ask_factor_pb1))
+        #    orders_jam.append(Order("JAMS", bid_price['JAMS'], 3 * ask_factor_pb1))
+        #    orders_djem.append(Order("DJEMBES", bid_price['DJEMBES'], 1 * ask_factor_pb1))
+        # elif z_val1 < -z_max1 and bid_factor_pb1 > 0: #and pos['PICNIC_BASKET1'] < pb1_cutoff:
+        #    orders_pb1.append(Order("PICNIC_BASKET1", bid_price['PICNIC_BASKET1'], 1 * bid_factor_pb1))
+        #    orders_cro.append(Order("CROISSANTS", ask_price['CROISSANTS'], (-6) * bid_factor_pb1))
+        #    orders_jam.append(Order("JAMS", ask_price['JAMS'], (-3) * bid_factor_pb1))
+        #    orders_djem.append(Order("DJEMBES", ask_price['DJEMBES'], (-1) * bid_factor_pb1))
 
-        if z_val > z_max and ask_factor_pb1 > 0 and pos['PICNIC_BASKET1'] > - pb1_cutoff:
-            orders_pb1.append(Order("PICNIC_BASKET1", ask_price['PICNIC_BASKET1'], (-1) * ask_factor_pb1))
-            orders_cro.append(Order("CROISSANTS", bid_price['CROISSANTS'], 6 * ask_factor_pb1))
-            orders_jam.append(Order("JAMS", bid_price['JAMS'], 3 * ask_factor_pb1))
-            orders_djem.append(Order("DJEMBES", bid_price['DJEMBES'], 1 * ask_factor_pb1))
-            z_ind = -1
-        elif z_val < -z_max and bid_factor_pb1 > 0 and pos['PICNIC_BASKET1'] < pb1_cutoff:
-            orders_pb1.append(Order("PICNIC_BASKET1", bid_price['PICNIC_BASKET1'], 1 * bid_factor_pb1))
-            orders_cro.append(Order("CROISSANTS", ask_price['CROISSANTS'], (-6) * bid_factor_pb1))
-            orders_jam.append(Order("JAMS", ask_price['JAMS'], (-3) * bid_factor_pb1))
-            orders_djem.append(Order("DJEMBES", ask_price['DJEMBES'], (-1) * bid_factor_pb1))
-            z_ind = +1
+        # buy_quantities = {"PICNIC_BASKET1": bid_factor_pb1,"PICNIC_BASKET2": 0,"CROISSANTS": 6 * ask_factor_pb1,"JAMS": 3 * ask_factor_pb1,"DJEMBES": ask_factor_pb1}
+        # sell_quantities = {"PICNIC_BASKET1": ask_factor_pb1,"PICNIC_BASKET2": 0,"CROISSANTS": 6 * bid_factor_pb1,"JAMS": 3 * bid_factor_pb1,"DJEMBES": bid_factor_pb1}
 
-        dict_spread1['z_index'] = z_ind
+        buy_quantities = {"PICNIC_BASKET1": 0,"PICNIC_BASKET2": 0,"CROISSANTS": 0,"JAMS": 0,"DJEMBES": 0}
+        sell_quantities = {"PICNIC_BASKET1": 0,"PICNIC_BASKET2": 0,"CROISSANTS": 0,"JAMS": 0,"DJEMBES": 0}
+
+        for prod in ratios2:
+            bid_amount2[prod] = min(pos_limit[prod] - pos[prod] - buy_quantities[prod], buy_available[prod] - buy_quantities[prod])
+            ask_amount2[prod] = min(pos_limit[prod] + pos[prod] - sell_quantities[prod], sell_available[prod] - sell_quantities[prod])
+
+            bid_factor2[prod] = int(bid_amount2[prod] / ratios2[prod])
+            ask_factor2[prod] = int(ask_amount2[prod] / ratios2[prod])
+
+        bid_factor_pb2 = min(bid_factor2['PICNIC_BASKET2'], ask_factor2['CROISSANTS'], ask_factor2['JAMS'])
+        ask_factor_pb2 = min(ask_factor2['PICNIC_BASKET2'], bid_factor2['CROISSANTS'], bid_factor2['JAMS'])
         
-        return {'pb1': orders_pb1, 'cro': orders_cro,'jam': orders_jam, 'djem': orders_djem, 'Dict_Spread1': dict_spread1}
+        if z_val2 > z_max2 and ask_factor_pb2 > 0: #and pos['PICNIC_BASKET2'] > - pb2_cutoff:
+            orders_pb2.append(Order("PICNIC_BASKET2", ask_price['PICNIC_BASKET2'], (-1) * ask_factor_pb2))
+            orders_cro.append(Order("CROISSANTS", bid_price['CROISSANTS'], 4 * ask_factor_pb2))
+            orders_jam.append(Order("JAMS", bid_price['JAMS'], 2 * ask_factor_pb2))
+        elif z_val2 < -z_max2 and bid_factor_pb2 > 0: #and pos['PICNIC_BASKET2'] < pb2_cutoff:
+            orders_pb2.append(Order("PICNIC_BASKET2", bid_price['PICNIC_BASKET2'], 1 * bid_factor_pb2))
+            orders_cro.append(Order("CROISSANTS", ask_price['CROISSANTS'], (-4) * bid_factor_pb2))
+            orders_jam.append(Order("JAMS", ask_price['JAMS'], (-2) * bid_factor_pb2))
+
+        return {'pb1': orders_pb1, 'pb2': orders_pb2, 'cro': orders_cro,'jam': orders_jam, 'djem': orders_djem, 'Dict_Spreads': dict_spreads}
     
     def run(self, state: TradingState):
         # Only method required. It takes all buy and sell orders for all symbols as an input, and outputs a list of orders to be sent
@@ -319,21 +369,21 @@ class Trader:
 
         result = {}
 
-        PB1_dict = self.pb1_ord(state)
+        PB_dict = self.pb_ord(state)
 
         #result["RAINFOREST_RESIN"] = self.resin_ord(state)
         #result["KELP"] = self.kelp_ord(state, window_lst)
-        result["PICNIC_BASKET1"] = PB1_dict['pb1']
-        result["CROISSANTS"] = PB1_dict['cro']
-        result["JAMS"] = PB1_dict['jam']
-        result["DJEMBES"] = PB1_dict['djem']
+        result["PICNIC_BASKET1"] = PB_dict['pb1']
+        result["PICNIC_BASKET2"] = PB_dict['pb2']
+        result["CROISSANTS"] = PB_dict['cro']
+        result["JAMS"] = PB_dict['jam']
+        result["DJEMBES"] = PB_dict['djem']
 
-        logger.print(PB1_dict['pb1'])
-        #print(PB1_dict['pb1'],PB1_dict['cro'],PB1_dict['jam'],PB1_dict['djem'])
+        logger.print(PB_dict['pb2'])
     
         # String value holding Trader state data required. 
 		# It will be delivered as TradingState.traderData on next execution.
-        traderData = jsonpickle.encode(PB1_dict['Dict_Spread1'])
+        traderData = jsonpickle.encode(PB_dict['Dict_Spreads'])
         
 
 		# Sample conversion request.
