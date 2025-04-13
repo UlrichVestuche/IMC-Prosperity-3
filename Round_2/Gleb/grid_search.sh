@@ -6,32 +6,34 @@ FILE="Round_2/Gleb/PB1_ga.py"
 LOGFILE="prosperity3bt_logs.txt"
 
 # Define an array of fair values to test.
-z_max=(1.9 2 2.1 2.2 2.3 2.4 2.5 2.6 2.7 2.8 2.9 3)
+z_max=(1.3 1.4 1.5 1.6 1.7 1.8 1.9 2 2.1)
 
 # Clear the log file
 > "$LOGFILE"
 
-for z in "${z_max[@]}"; do
-    echo "----------------------------------------" | tee -a "$LOGFILE"
-    echo "Updating file with fair_value =$z" | tee -a "$LOGFILE"
+# Outer loop: iterate over len_long values from 100 to 1000 in steps of 100.
+for len in $(seq 30 10 300); do
+    echo "========================================" | tee -a "$LOGFILE"
+    echo "Updating file with len_long = $len" | tee -a "$LOGFILE"
     
-    # Define the OLD_LINE (exact match for the original setting).
-#     OLD_LINE='z_max = 1'
+    # Update len_long value in the target file.
+    sed -i.bak -E "s/^(len_long[[:space:]]*=[[:space:]]*).*$/len_long = $len/" "$FILE"
     
-#     # Build the new line using the current fair value.
-#     NEW_LINE="z_max = $z\n"
-    
-#     # Use sed to replace the line in the file.
-#     sed -i.bak "/^$(printf '%s\n' "$OLD_LINE" | sed 's:[\/&]:\\&:g')\$/c\\
-# $NEW_LINE" "$FILE"
-    sed -i.bak -E "s/^(z_max[[:space:]]*=[[:space:]]*).*$/z_max = $z/" "$FILE"
-    
-    echo "File updated. Running prosperity3bt with z_max = $z" | tee -a "$LOGFILE"
-    
-    # Run the trading algorithm via prosperity3bt (adjust the command if needed).
-    prosperity3bt "$FILE" 2 --no-progress   >> "$LOGFILE" 2>&1
-    
-    echo "Completed run for z_max = $z" | tee -a "$LOGFILE"
+    # Inner loop: iterate over z_max values.
+    for z in "${z_max[@]}"; do
+        echo "----------------------------------------" | tee -a "$LOGFILE"
+        echo "Updating file with z_max = $z" | tee -a "$LOGFILE"
+        
+        # Update z_max value in the target file.
+        sed -i.bak -E "s/^(z_max[[:space:]]*=[[:space:]]*).*$/z_max = $z/" "$FILE"
+        
+        echo "File updated. Running prosperity3bt with z_max = $z, len_long = $len" | tee -a "$LOGFILE"
+        
+        # Run the trading algorithm via prosperity3bt (adjust the command if needed).
+        prosperity3bt "$FILE" 2--1 2-0 --no-progress >> "$LOGFILE" 2>&1
+        
+        echo "Completed run for z_max = $z, len_long = $len" | tee -a "$LOGFILE"
+    done
 done
 
 # Display the collected logs
