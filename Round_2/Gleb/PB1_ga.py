@@ -11,8 +11,8 @@ from typing import Any
 from datamodel import Listing, Observation, Order, OrderDepth, ProsperityEncoder, Symbol, Trade, TradingState
 
 # Global variables
-len_long = 20
-z_max = 1.4
+len_long = 500
+z_max = 1.9
 price_spread = {'PICNIC_BASKET1': 2,'CROISSANTS': 1,'JAMS': 1,'DJEMBES': 1}
 max_factor = 50
 pb1_cutoff = 25
@@ -168,7 +168,8 @@ class Trader:
 
         # window lengths
         global len_long
-        len_short = 1
+        
+        alpha = 1/ len_long
 
         pb1_mprice = self.r2_mprice(state)["PICNIC_BASKET1"]
         cro_mprice = self.r2_mprice(state)["CROISSANTS"]
@@ -179,37 +180,20 @@ class Trader:
         spread_price = pb1_mprice - synth_mprice
 
 
-        lst_long = dct['long']
-        lst_short = dct['short']
+        win_average = dct['average']
+        win_stdev = dct['stdev']
 
-        if len(lst_long) < len_long:
-            lst_long.append(spread_price)
+        win_average = (1 - alpha) * win_average + alpha * spread_price
+
+        win_stdev = math.sqrt((1 - alpha) * win_stdev**2 + alpha * (spread_price-win_average)**2)
+
+        if win_stdev:
+            z_val = (spread_price - win_average) / win_stdev
         else:
-            lst_long.pop(0)
-            lst_long.append(spread_price)
-
-        if len(lst_short) < len_short:
-            lst_short.append(spread_price)
-        else:
-            lst_short.pop(0)
-            lst_short.append(spread_price)
-
-        mean_long = sum(lst_long) / len(lst_long)
-        stdev_sq_long = 0
-
-        for p in lst_long:
-            stdev_sq_long += (p - mean_long) ** 2
-
-        stdev_long = math.sqrt(stdev_sq_long/len(lst_long))
-        #stdev_long = 1
-    
-        if stdev_long > 0:
-            z_val = (spread_price - mean_long) / stdev_long
-        else: 
             z_val = 0
 
-        dct['long'] = lst_long
-        dct['short'] = lst_short
+        dct['average'] = win_average
+        dct['stdev'] = win_stdev
         dct['zscore'] = z_val
 
         return dct
@@ -243,7 +227,7 @@ class Trader:
         if state.traderData:
             dict_spread1_prev = jsonpickle.decode(state.traderData)
         else:
-            dict_spread1_prev = {'long': [], 'short': [],'zscore': 0}
+            dict_spread1_prev = {'zscore': 0,'fprices': {},'average': 0, 'stdev': 0,'z_index': 0}
 
         # Update the dictionary with the current state
         dict_spread1 = self.pb1_spread(state, dict_spread1_prev)
@@ -256,9 +240,11 @@ class Trader:
 
         # Define fair prices
         fprice = {'PICNIC_BASKET1': pb1_mprice,'CROISSANTS': cro_mprice,'JAMS': jam_mprice,'DJEMBES': djem_mprice}
+        dict_spread1['fprices'] = fprice
 
-        # Import the z value
+        # Import z value and index
         z_val = dict_spread1['zscore']
+        z_ind = dict_spread1['z_index']
 
         # Define the bid factors
         bid_amount = {}
@@ -306,16 +292,23 @@ class Trader:
         bid_factor_pb1 = min(max_factor,bid_factor['PICNIC_BASKET1'], ask_factor['CROISSANTS'], ask_factor['JAMS'], ask_factor['DJEMBES'])
         ask_factor_pb1 = min(max_factor, ask_factor['PICNIC_BASKET1'], bid_factor['CROISSANTS'], bid_factor['JAMS'], bid_factor['DJEMBES'])
 
+        logger.print('Bid factors pb1, cro, jams, djem: ',bid_factor['PICNIC_BASKET1'], ask_factor['CROISSANTS'], ask_factor['JAMS'], ask_factor['DJEMBES'])
+        logger.print('Ask factors pb1, cro, jams, djem: ',ask_factor['PICNIC_BASKET1'], bid_factor['CROISSANTS'], bid_factor['JAMS'], bid_factor['DJEMBES'])
+
         if z_val > z_max and ask_factor_pb1 > 0 and pos['PICNIC_BASKET1'] > - pb1_cutoff:
             orders_pb1.append(Order("PICNIC_BASKET1", ask_price['PICNIC_BASKET1'], (-1) * ask_factor_pb1))
             orders_cro.append(Order("CROISSANTS", bid_price['CROISSANTS'], 6 * ask_factor_pb1))
             orders_jam.append(Order("JAMS", bid_price['JAMS'], 3 * ask_factor_pb1))
             orders_djem.append(Order("DJEMBES", bid_price['DJEMBES'], 1 * ask_factor_pb1))
+            z_ind = -1
         elif z_val < -z_max and bid_factor_pb1 > 0 and pos['PICNIC_BASKET1'] < pb1_cutoff:
             orders_pb1.append(Order("PICNIC_BASKET1", bid_price['PICNIC_BASKET1'], 1 * bid_factor_pb1))
             orders_cro.append(Order("CROISSANTS", ask_price['CROISSANTS'], (-6) * bid_factor_pb1))
             orders_jam.append(Order("JAMS", ask_price['JAMS'], (-3) * bid_factor_pb1))
             orders_djem.append(Order("DJEMBES", ask_price['DJEMBES'], (-1) * bid_factor_pb1))
+            z_ind = +1
+
+        dict_spread1['z_index'] = z_ind
         
         return {'pb1': orders_pb1, 'cro': orders_cro,'jam': orders_jam, 'djem': orders_djem, 'Dict_Spread1': dict_spread1}
     
@@ -335,6 +328,7 @@ class Trader:
         result["JAMS"] = PB1_dict['jam']
         result["DJEMBES"] = PB1_dict['djem']
 
+        logger.print(PB1_dict['pb1'])
         #print(PB1_dict['pb1'],PB1_dict['cro'],PB1_dict['jam'],PB1_dict['djem'])
     
         # String value holding Trader state data required. 
