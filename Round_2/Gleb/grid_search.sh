@@ -6,13 +6,13 @@ FILE="Round_2/Gleb/PB1_ga.py"
 LOGFILE="prosperity3bt_logs.txt"
 
 # Define an array of fair values to test.
-z_max=(1.3 1.4 1.5 1.6 1.7 1.8 1.9 2 2.1)
+z_max=(1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2 2.1 2.2 2.3 2.4)
 
 # Clear the log file
 > "$LOGFILE"
 
 # Outer loop: iterate over len_long values from 100 to 1000 in steps of 100.
-for len in $(seq 30 10 300); do
+for len in $(seq 300 100 1900); do
     echo "========================================" | tee -a "$LOGFILE"
     echo "Updating file with len_long = $len" | tee -a "$LOGFILE"
     
@@ -30,7 +30,7 @@ for len in $(seq 30 10 300); do
         echo "File updated. Running prosperity3bt with z_max = $z, len_long = $len" | tee -a "$LOGFILE"
         
         # Run the trading algorithm via prosperity3bt (adjust the command if needed).
-        prosperity3bt "$FILE" 2--1 2-0 --no-progress >> "$LOGFILE" 2>&1
+        prosperity3bt "$FILE" 2-1 --no-progress >> "$LOGFILE" 2>&1
         
         echo "Completed run for z_max = $z, len_long = $len" | tee -a "$LOGFILE"
     done
