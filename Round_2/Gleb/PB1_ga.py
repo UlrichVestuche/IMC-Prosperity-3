@@ -19,7 +19,7 @@ len_long2 = 300
 z_max2 =  1.5
 
 price_spread = {'PICNIC_BASKET1': 2,'PICNIC_BASKET2': 1,'CROISSANTS': 2,'JAMS': 1,'DJEMBES': 1}
-price_max_pb1 = 4
+#price_max_pb1 = 4
 
 class Logger:
     def __init__(self) -> None:
@@ -300,8 +300,13 @@ class Trader:
             ask_prices = []
             buy_prices = []
 
-            for p in buy_ord:
-                if prod == "PICNIC_BASKET1" and pos[prod] < -40:    
+            #if prod == "PICNIC_BASKET1" and pos[prod] > pos_limit_pb1:
+            #    for p in buy_ord:    
+            #        if p >= fprice[prod] - price_max_pb1:
+            #            sell_available[prod] += buy_ord[p]
+            #            ask_prices.append(p)
+            
+            for p in buy_ord:    
                 if p >= fprice[prod] - price_spread[prod]:
                     sell_available[prod] += buy_ord[p]
                     ask_prices.append(p)
@@ -309,6 +314,11 @@ class Trader:
             if ask_prices:
                 ask_price[prod] = ask_prices[-1]
             
+            #if prod == "PICNIC_BASKET1" and pos[prod] < -pos_limit_pb1:
+            #    for p in sell_ord:
+            #        if p <= fprice[prod] + price_max_pb1:
+            #            buy_available[prod] -= sell_ord[p]
+            #            buy_prices.append(p)
             for p in sell_ord:
                 if p <= fprice[prod] + price_spread[prod]:
                     buy_available[prod] -= sell_ord[p]
@@ -323,6 +333,10 @@ class Trader:
 
             bid_factor[prod] = int(bid_amount[prod] / ratios1[prod])
             ask_factor[prod] = int(ask_amount[prod] / ratios1[prod])
+        
+        # Initializing buy and sell quantities
+        buy_quantities = {"PICNIC_BASKET1": 0,"PICNIC_BASKET2": 0,"CROISSANTS": 0,"JAMS": 0,"DJEMBES": 0}
+        sell_quantities = {"PICNIC_BASKET1": 0,"PICNIC_BASKET2": 0,"CROISSANTS": 0,"JAMS": 0,"DJEMBES": 0}
 
         bid_factor_pb1 = min(bid_factor['PICNIC_BASKET1'], ask_factor['CROISSANTS'], ask_factor['JAMS'], ask_factor['DJEMBES'])
         ask_factor_pb1 = min(ask_factor['PICNIC_BASKET1'], bid_factor['CROISSANTS'], bid_factor['JAMS'], bid_factor['DJEMBES'])
@@ -340,9 +354,6 @@ class Trader:
 
         buy_quantities = {"PICNIC_BASKET1": bid_factor_pb1,"PICNIC_BASKET2": 0,"CROISSANTS": 6 * ask_factor_pb1,"JAMS": 3 * ask_factor_pb1,"DJEMBES": ask_factor_pb1}
         sell_quantities = {"PICNIC_BASKET1": ask_factor_pb1,"PICNIC_BASKET2": 0,"CROISSANTS": 6 * bid_factor_pb1,"JAMS": 3 * bid_factor_pb1,"DJEMBES": bid_factor_pb1}
-
-        buy_quantities = {"PICNIC_BASKET1": 0,"PICNIC_BASKET2": 0,"CROISSANTS": 0,"JAMS": 0,"DJEMBES": 0}
-        sell_quantities = {"PICNIC_BASKET1": 0,"PICNIC_BASKET2": 0,"CROISSANTS": 0,"JAMS": 0,"DJEMBES": 0}
 
         for prod in ratios2:
             bid_amount2[prod] = min(pos_limit[prod] - pos[prod] - buy_quantities[prod], buy_available[prod] - buy_quantities[prod])
