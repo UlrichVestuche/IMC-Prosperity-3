@@ -12,11 +12,11 @@ from datamodel import Listing, Observation, Order, OrderDepth, ProsperityEncoder
 
 # Global variables
 len_long1 = 9000
-#z_max1 = 1.8
+z_max1 = 1.5
 
 
 len_long2 = 9000
-#z_max2 =  1.5
+z_max2 =  1.5
 
 price_spread = {'PICNIC_BASKET1': 2,'PICNIC_BASKET2': 1,'CROISSANTS': 2,'JAMS': 1,'DJEMBES': 1}
 
