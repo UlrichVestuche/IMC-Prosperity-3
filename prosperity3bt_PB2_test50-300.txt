@@ -1,0 +1,1152 @@
+========================================
+Updating file with len_long = 100
+----------------------------------------
+Updating file with z_max2 = 1.1
+File updated. Running prosperity3bt with z_max2 = 1.1, len_long2 = 100
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: -1,260
+DJEMBES: 0
+JAMS: 561
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: 7,982
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 7,283
+Completed run for z_max2 = 1.1, len_long = 100
+----------------------------------------
+Updating file with z_max2 = 1.2
+File updated. Running prosperity3bt with z_max2 = 1.2, len_long2 = 100
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: -2,214
+DJEMBES: 0
+JAMS: 448
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: 9,726
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 7,960
+Completed run for z_max2 = 1.2, len_long = 100
+----------------------------------------
+Updating file with z_max2 = 1.3
+File updated. Running prosperity3bt with z_max2 = 1.3, len_long2 = 100
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: -2,282
+DJEMBES: 0
+JAMS: -632
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: 8,152
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 5,238
+Completed run for z_max2 = 1.3, len_long = 100
+----------------------------------------
+Updating file with z_max2 = 1.4
+File updated. Running prosperity3bt with z_max2 = 1.4, len_long2 = 100
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: -462
+DJEMBES: 0
+JAMS: -78
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: 3,292
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 2,752
+Completed run for z_max2 = 1.4, len_long = 100
+----------------------------------------
+Updating file with z_max2 = 1.5
+File updated. Running prosperity3bt with z_max2 = 1.5, len_long2 = 100
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: -1,182
+DJEMBES: 0
+JAMS: 80
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: 3,392
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 2,290
+Completed run for z_max2 = 1.5, len_long = 100
+----------------------------------------
+Updating file with z_max2 = 1.6
+File updated. Running prosperity3bt with z_max2 = 1.6, len_long2 = 100
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: -554
+DJEMBES: 0
+JAMS: 420
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: 1,680
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 1,546
+Completed run for z_max2 = 1.6, len_long = 100
+----------------------------------------
+Updating file with z_max2 = 1.7
+File updated. Running prosperity3bt with z_max2 = 1.7, len_long2 = 100
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: -992
+DJEMBES: 0
+JAMS: 38
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: 894
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: -60
+Completed run for z_max2 = 1.7, len_long = 100
+----------------------------------------
+Updating file with z_max2 = 1.8
+File updated. Running prosperity3bt with z_max2 = 1.8, len_long2 = 100
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: -56
+DJEMBES: 0
+JAMS: 54
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: 45
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 43
+Completed run for z_max2 = 1.8, len_long = 100
+----------------------------------------
+Updating file with z_max2 = 1.9
+File updated. Running prosperity3bt with z_max2 = 1.9, len_long2 = 100
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 242
+DJEMBES: 0
+JAMS: -66
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: -326
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: -150
+Completed run for z_max2 = 1.9, len_long = 100
+========================================
+Updating file with len_long = 150
+----------------------------------------
+Updating file with z_max2 = 1.1
+File updated. Running prosperity3bt with z_max2 = 1.1, len_long2 = 150
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: -618
+DJEMBES: 0
+JAMS: 589
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: 6,586
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 6,556
+Completed run for z_max2 = 1.1, len_long = 150
+----------------------------------------
+Updating file with z_max2 = 1.2
+File updated. Running prosperity3bt with z_max2 = 1.2, len_long2 = 150
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: -110
+DJEMBES: 0
+JAMS: 911
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: 4,770
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 5,572
+Completed run for z_max2 = 1.2, len_long = 150
+----------------------------------------
+Updating file with z_max2 = 1.3
+File updated. Running prosperity3bt with z_max2 = 1.3, len_long2 = 150
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: -1,032
+DJEMBES: 0
+JAMS: 888
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: 5,507
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 5,363
+Completed run for z_max2 = 1.3, len_long = 150
+----------------------------------------
+Updating file with z_max2 = 1.4
+File updated. Running prosperity3bt with z_max2 = 1.4, len_long2 = 150
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 212
+DJEMBES: 0
+JAMS: 1,220
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: 1,380
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 2,812
+Completed run for z_max2 = 1.4, len_long = 150
+----------------------------------------
+Updating file with z_max2 = 1.5
+File updated. Running prosperity3bt with z_max2 = 1.5, len_long2 = 150
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 20
+DJEMBES: 0
+JAMS: 258
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: 1,476
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 1,754
+Completed run for z_max2 = 1.5, len_long = 150
+----------------------------------------
+Updating file with z_max2 = 1.6
+File updated. Running prosperity3bt with z_max2 = 1.6, len_long2 = 150
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 414
+DJEMBES: 0
+JAMS: 82
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: 1,992
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 2,488
+Completed run for z_max2 = 1.6, len_long = 150
+----------------------------------------
+Updating file with z_max2 = 1.7
+File updated. Running prosperity3bt with z_max2 = 1.7, len_long2 = 150
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 606
+DJEMBES: 0
+JAMS: -90
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: 1,264
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 1,780
+Completed run for z_max2 = 1.7, len_long = 150
+----------------------------------------
+Updating file with z_max2 = 1.8
+File updated. Running prosperity3bt with z_max2 = 1.8, len_long2 = 150
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 890
+DJEMBES: 0
+JAMS: -36
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: -274
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 580
+Completed run for z_max2 = 1.8, len_long = 150
+----------------------------------------
+Updating file with z_max2 = 1.9
+File updated. Running prosperity3bt with z_max2 = 1.9, len_long2 = 150
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 938
+DJEMBES: 0
+JAMS: -130
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: -1,094
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: -286
+Completed run for z_max2 = 1.9, len_long = 150
+========================================
+Updating file with len_long = 200
+----------------------------------------
+Updating file with z_max2 = 1.1
+File updated. Running prosperity3bt with z_max2 = 1.1, len_long2 = 200
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 3,496
+DJEMBES: 0
+JAMS: 199
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: 149
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 3,844
+Completed run for z_max2 = 1.1, len_long = 200
+----------------------------------------
+Updating file with z_max2 = 1.2
+File updated. Running prosperity3bt with z_max2 = 1.2, len_long2 = 200
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 4
+DJEMBES: 0
+JAMS: -31
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: 6,231
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 6,204
+Completed run for z_max2 = 1.2, len_long = 200
+----------------------------------------
+Updating file with z_max2 = 1.3
+File updated. Running prosperity3bt with z_max2 = 1.3, len_long2 = 200
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 968
+DJEMBES: 0
+JAMS: 821
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: 4,661
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 6,450
+Completed run for z_max2 = 1.3, len_long = 200
+----------------------------------------
+Updating file with z_max2 = 1.4
+File updated. Running prosperity3bt with z_max2 = 1.4, len_long2 = 200
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 1,496
+DJEMBES: 0
+JAMS: 1,569
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: 2,347
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 5,412
+Completed run for z_max2 = 1.4, len_long = 200
+----------------------------------------
+Updating file with z_max2 = 1.5
+File updated. Running prosperity3bt with z_max2 = 1.5, len_long2 = 200
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 1,788
+DJEMBES: 0
+JAMS: 918
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: 614
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 3,320
+Completed run for z_max2 = 1.5, len_long = 200
+----------------------------------------
+Updating file with z_max2 = 1.6
+File updated. Running prosperity3bt with z_max2 = 1.6, len_long2 = 200
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 1,800
+DJEMBES: 0
+JAMS: 1,156
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: -44
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 2,912
+Completed run for z_max2 = 1.6, len_long = 200
+----------------------------------------
+Updating file with z_max2 = 1.7
+File updated. Running prosperity3bt with z_max2 = 1.7, len_long2 = 200
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 1,632
+DJEMBES: 0
+JAMS: 346
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: -223
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 1,755
+Completed run for z_max2 = 1.7, len_long = 200
+----------------------------------------
+Updating file with z_max2 = 1.8
+File updated. Running prosperity3bt with z_max2 = 1.8, len_long2 = 200
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 956
+DJEMBES: 0
+JAMS: 122
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: 27
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 1,105
+Completed run for z_max2 = 1.8, len_long = 200
+----------------------------------------
+Updating file with z_max2 = 1.9
+File updated. Running prosperity3bt with z_max2 = 1.9, len_long2 = 200
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 774
+DJEMBES: 0
+JAMS: -144
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: 328
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 958
+Completed run for z_max2 = 1.9, len_long = 200
+========================================
+Updating file with len_long = 250
+----------------------------------------
+Updating file with z_max2 = 1.1
+File updated. Running prosperity3bt with z_max2 = 1.1, len_long2 = 250
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 3,888
+DJEMBES: 0
+JAMS: 1,145
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: 1,814
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 6,847
+Completed run for z_max2 = 1.1, len_long = 250
+----------------------------------------
+Updating file with z_max2 = 1.2
+File updated. Running prosperity3bt with z_max2 = 1.2, len_long2 = 250
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 2,744
+DJEMBES: 0
+JAMS: 1,049
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: 2,863
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 6,656
+Completed run for z_max2 = 1.2, len_long = 250
+----------------------------------------
+Updating file with z_max2 = 1.3
+File updated. Running prosperity3bt with z_max2 = 1.3, len_long2 = 250
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 1,890
+DJEMBES: 0
+JAMS: 975
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: 4,986
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 7,850
+Completed run for z_max2 = 1.3, len_long = 250
+----------------------------------------
+Updating file with z_max2 = 1.4
+File updated. Running prosperity3bt with z_max2 = 1.4, len_long2 = 250
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 2,528
+DJEMBES: 0
+JAMS: 1,085
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: 1,765
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 5,378
+Completed run for z_max2 = 1.4, len_long = 250
+----------------------------------------
+Updating file with z_max2 = 1.5
+File updated. Running prosperity3bt with z_max2 = 1.5, len_long2 = 250
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 2,054
+DJEMBES: 0
+JAMS: 1,155
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: 2,096
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 5,304
+Completed run for z_max2 = 1.5, len_long = 250
+----------------------------------------
+Updating file with z_max2 = 1.6
+File updated. Running prosperity3bt with z_max2 = 1.6, len_long2 = 250
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 2,332
+DJEMBES: 0
+JAMS: 1,522
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: -1,196
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 2,658
+Completed run for z_max2 = 1.6, len_long = 250
+----------------------------------------
+Updating file with z_max2 = 1.7
+File updated. Running prosperity3bt with z_max2 = 1.7, len_long2 = 250
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 1,772
+DJEMBES: 0
+JAMS: 682
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: -466
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 1,988
+Completed run for z_max2 = 1.7, len_long = 250
+----------------------------------------
+Updating file with z_max2 = 1.8
+File updated. Running prosperity3bt with z_max2 = 1.8, len_long2 = 250
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 1,602
+DJEMBES: 0
+JAMS: 318
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: -398
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 1,522
+Completed run for z_max2 = 1.8, len_long = 250
+----------------------------------------
+Updating file with z_max2 = 1.9
+File updated. Running prosperity3bt with z_max2 = 1.9, len_long2 = 250
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 994
+DJEMBES: 0
+JAMS: -20
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: 36
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 1,010
+Completed run for z_max2 = 1.9, len_long = 250
+========================================
+Updating file with len_long = 300
+----------------------------------------
+Updating file with z_max2 = 1.1
+File updated. Running prosperity3bt with z_max2 = 1.1, len_long2 = 300
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 5,744
+DJEMBES: 0
+JAMS: 1,309
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: -2,387
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 4,666
+Completed run for z_max2 = 1.1, len_long = 300
+----------------------------------------
+Updating file with z_max2 = 1.2
+File updated. Running prosperity3bt with z_max2 = 1.2, len_long2 = 300
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 3,720
+DJEMBES: 0
+JAMS: 1,355
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: 1,423
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 6,498
+Completed run for z_max2 = 1.2, len_long = 300
+----------------------------------------
+Updating file with z_max2 = 1.3
+File updated. Running prosperity3bt with z_max2 = 1.3, len_long2 = 300
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 3,148
+DJEMBES: 0
+JAMS: 1,381
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: 3,053
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 7,582
+Completed run for z_max2 = 1.3, len_long = 300
+----------------------------------------
+Updating file with z_max2 = 1.4
+File updated. Running prosperity3bt with z_max2 = 1.4, len_long2 = 300
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 2,882
+DJEMBES: 0
+JAMS: 969
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: 1,616
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 5,468
+Completed run for z_max2 = 1.4, len_long = 300
+----------------------------------------
+Updating file with z_max2 = 1.5
+File updated. Running prosperity3bt with z_max2 = 1.5, len_long2 = 300
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 2,036
+DJEMBES: 0
+JAMS: 1,293
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: 1,479
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 4,808
+Completed run for z_max2 = 1.5, len_long = 300
+----------------------------------------
+Updating file with z_max2 = 1.6
+File updated. Running prosperity3bt with z_max2 = 1.6, len_long2 = 300
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 1,842
+DJEMBES: 0
+JAMS: 1,153
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: 1,660
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 4,654
+Completed run for z_max2 = 1.6, len_long = 300
+----------------------------------------
+Updating file with z_max2 = 1.7
+File updated. Running prosperity3bt with z_max2 = 1.7, len_long2 = 300
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 2,434
+DJEMBES: 0
+JAMS: 1,190
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: -442
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 3,182
+Completed run for z_max2 = 1.7, len_long = 300
+----------------------------------------
+Updating file with z_max2 = 1.8
+File updated. Running prosperity3bt with z_max2 = 1.8, len_long2 = 300
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 2,240
+DJEMBES: 0
+JAMS: 212
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: -1,158
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 1,294
+Completed run for z_max2 = 1.8, len_long = 300
+----------------------------------------
+Updating file with z_max2 = 1.9
+File updated. Running prosperity3bt with z_max2 = 1.9, len_long2 = 300
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 1,356
+DJEMBES: 0
+JAMS: 26
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: -155
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 1,227
+Completed run for z_max2 = 1.9, len_long = 300
+========================================
+Updating file with len_long = 350
+----------------------------------------
+Updating file with z_max2 = 1.1
+File updated. Running prosperity3bt with z_max2 = 1.1, len_long2 = 350
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 6,070
+DJEMBES: 0
+JAMS: 1,071
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: -3,464
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 3,678
+Completed run for z_max2 = 1.1, len_long = 350
+----------------------------------------
+Updating file with z_max2 = 1.2
+File updated. Running prosperity3bt with z_max2 = 1.2, len_long2 = 350
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 4,260
+DJEMBES: 0
+JAMS: 1,963
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: -814
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 5,409
+Completed run for z_max2 = 1.2, len_long = 350
+----------------------------------------
+Updating file with z_max2 = 1.3
+File updated. Running prosperity3bt with z_max2 = 1.3, len_long2 = 350
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 3,964
+DJEMBES: 0
+JAMS: 1,301
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: 158
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 5,423
+Completed run for z_max2 = 1.3, len_long = 350
+----------------------------------------
+Updating file with z_max2 = 1.4
+File updated. Running prosperity3bt with z_max2 = 1.4, len_long2 = 350
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 3,504
+DJEMBES: 0
+JAMS: 1,557
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: 1,358
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 6,419
+Completed run for z_max2 = 1.4, len_long = 350
+----------------------------------------
+Updating file with z_max2 = 1.5
+File updated. Running prosperity3bt with z_max2 = 1.5, len_long2 = 350
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 1,672
+DJEMBES: 0
+JAMS: 1,667
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: 3,859
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 7,198
+Completed run for z_max2 = 1.5, len_long = 350
+----------------------------------------
+Updating file with z_max2 = 1.6
+File updated. Running prosperity3bt with z_max2 = 1.6, len_long2 = 350
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 2,116
+DJEMBES: 0
+JAMS: 1,211
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: 1,837
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 5,164
+Completed run for z_max2 = 1.6, len_long = 350
+----------------------------------------
+Updating file with z_max2 = 1.7
+File updated. Running prosperity3bt with z_max2 = 1.7, len_long2 = 350
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 2,730
+DJEMBES: 0
+JAMS: 1,297
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: -1,102
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 2,924
+Completed run for z_max2 = 1.7, len_long = 350
+----------------------------------------
+Updating file with z_max2 = 1.8
+File updated. Running prosperity3bt with z_max2 = 1.8, len_long2 = 350
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 2,774
+DJEMBES: 0
+JAMS: 433
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: -1,344
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 1,862
+Completed run for z_max2 = 1.8, len_long = 350
+----------------------------------------
+Updating file with z_max2 = 1.9
+File updated. Running prosperity3bt with z_max2 = 1.9, len_long2 = 350
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 2,242
+DJEMBES: 0
+JAMS: 332
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: -1,308
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 1,266
+Completed run for z_max2 = 1.9, len_long = 350
+========================================
+Updating file with len_long = 400
+----------------------------------------
+Updating file with z_max2 = 1.1
+File updated. Running prosperity3bt with z_max2 = 1.1, len_long2 = 400
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 6,054
+DJEMBES: 0
+JAMS: 697
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: -3,774
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 2,976
+Completed run for z_max2 = 1.1, len_long = 400
+----------------------------------------
+Updating file with z_max2 = 1.2
+File updated. Running prosperity3bt with z_max2 = 1.2, len_long2 = 400
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 5,178
+DJEMBES: 0
+JAMS: 1,893
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: -2,532
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 4,538
+Completed run for z_max2 = 1.2, len_long = 400
+----------------------------------------
+Updating file with z_max2 = 1.3
+File updated. Running prosperity3bt with z_max2 = 1.3, len_long2 = 400
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 5,112
+DJEMBES: 0
+JAMS: 2,357
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: -3,218
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 4,251
+Completed run for z_max2 = 1.3, len_long = 400
+----------------------------------------
+Updating file with z_max2 = 1.4
+File updated. Running prosperity3bt with z_max2 = 1.4, len_long2 = 400
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 3,324
+DJEMBES: 0
+JAMS: 2,111
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: 2,821
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 8,256
+Completed run for z_max2 = 1.4, len_long = 400
+----------------------------------------
+Updating file with z_max2 = 1.5
+File updated. Running prosperity3bt with z_max2 = 1.5, len_long2 = 400
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 2,588
+DJEMBES: 0
+JAMS: 1,469
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: 3,487
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 7,544
+Completed run for z_max2 = 1.5, len_long = 400
+----------------------------------------
+Updating file with z_max2 = 1.6
+File updated. Running prosperity3bt with z_max2 = 1.6, len_long2 = 400
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 2,602
+DJEMBES: 0
+JAMS: 1,007
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: 2,066
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 5,674
+Completed run for z_max2 = 1.6, len_long = 400
+----------------------------------------
+Updating file with z_max2 = 1.7
+File updated. Running prosperity3bt with z_max2 = 1.7, len_long2 = 400
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 2,936
+DJEMBES: 0
+JAMS: 1,317
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: -1,851
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 2,402
+Completed run for z_max2 = 1.7, len_long = 400
+----------------------------------------
+Updating file with z_max2 = 1.8
+File updated. Running prosperity3bt with z_max2 = 1.8, len_long2 = 400
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 2,774
+DJEMBES: 0
+JAMS: 445
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: -1,392
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 1,826
+Completed run for z_max2 = 1.8, len_long = 400
+----------------------------------------
+Updating file with z_max2 = 1.9
+File updated. Running prosperity3bt with z_max2 = 1.9, len_long2 = 400
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 2,006
+DJEMBES: 0
+JAMS: 1
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: 310
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 2,316
+Completed run for z_max2 = 1.9, len_long = 400
+========================================
+Updating file with len_long = 450
+----------------------------------------
+Updating file with z_max2 = 1.1
+File updated. Running prosperity3bt with z_max2 = 1.1, len_long2 = 450
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 5,852
+DJEMBES: 0
+JAMS: 1,011
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: -3,401
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 3,462
+Completed run for z_max2 = 1.1, len_long = 450
+----------------------------------------
+Updating file with z_max2 = 1.2
+File updated. Running prosperity3bt with z_max2 = 1.2, len_long2 = 450
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 6,458
+DJEMBES: 0
+JAMS: 2,105
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: -6,432
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 2,130
+Completed run for z_max2 = 1.2, len_long = 450
+----------------------------------------
+Updating file with z_max2 = 1.3
+File updated. Running prosperity3bt with z_max2 = 1.3, len_long2 = 450
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 4,898
+DJEMBES: 0
+JAMS: 3,533
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: -2,836
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 5,596
+Completed run for z_max2 = 1.3, len_long = 450
+----------------------------------------
+Updating file with z_max2 = 1.4
+File updated. Running prosperity3bt with z_max2 = 1.4, len_long2 = 450
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 4,280
+DJEMBES: 0
+JAMS: 2,203
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: 522
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 7,005
+Completed run for z_max2 = 1.4, len_long = 450
+----------------------------------------
+Updating file with z_max2 = 1.5
+File updated. Running prosperity3bt with z_max2 = 1.5, len_long2 = 450
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 3,368
+DJEMBES: 0
+JAMS: 1,753
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: 1,369
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 6,490
+Completed run for z_max2 = 1.5, len_long = 450
+----------------------------------------
+Updating file with z_max2 = 1.6
+File updated. Running prosperity3bt with z_max2 = 1.6, len_long2 = 450
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 2,276
+DJEMBES: 0
+JAMS: 861
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: 3,786
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 6,923
+Completed run for z_max2 = 1.6, len_long = 450
+----------------------------------------
+Updating file with z_max2 = 1.7
+File updated. Running prosperity3bt with z_max2 = 1.7, len_long2 = 450
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 2,514
+DJEMBES: 0
+JAMS: 973
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: -12
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 3,474
+Completed run for z_max2 = 1.7, len_long = 450
+----------------------------------------
+Updating file with z_max2 = 1.8
+File updated. Running prosperity3bt with z_max2 = 1.8, len_long2 = 450
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 2,322
+DJEMBES: 0
+JAMS: 1,051
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: -880
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 2,492
+Completed run for z_max2 = 1.8, len_long = 450
+----------------------------------------
+Updating file with z_max2 = 1.9
+File updated. Running prosperity3bt with z_max2 = 1.9, len_long2 = 450
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 1,842
+DJEMBES: 0
+JAMS: 239
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: 470
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 2,552
+Completed run for z_max2 = 1.9, len_long = 450
+========================================
+Updating file with len_long = 500
+----------------------------------------
+Updating file with z_max2 = 1.1
+File updated. Running prosperity3bt with z_max2 = 1.1, len_long2 = 500
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 4,856
+DJEMBES: 0
+JAMS: 2,361
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: -1,946
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 5,271
+Completed run for z_max2 = 1.1, len_long = 500
+----------------------------------------
+Updating file with z_max2 = 1.2
+File updated. Running prosperity3bt with z_max2 = 1.2, len_long2 = 500
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 6,420
+DJEMBES: 0
+JAMS: 3,255
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: -7,180
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 2,495
+Completed run for z_max2 = 1.2, len_long = 500
+----------------------------------------
+Updating file with z_max2 = 1.3
+File updated. Running prosperity3bt with z_max2 = 1.3, len_long2 = 500
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 5,146
+DJEMBES: 0
+JAMS: 4,117
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: -3,492
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 5,772
+Completed run for z_max2 = 1.3, len_long = 500
+----------------------------------------
+Updating file with z_max2 = 1.4
+File updated. Running prosperity3bt with z_max2 = 1.4, len_long2 = 500
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 3,578
+DJEMBES: 0
+JAMS: 3,437
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: 1,438
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 8,452
+Completed run for z_max2 = 1.4, len_long = 500
+----------------------------------------
+Updating file with z_max2 = 1.5
+File updated. Running prosperity3bt with z_max2 = 1.5, len_long2 = 500
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 2,944
+DJEMBES: 0
+JAMS: 1,533
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: 1,293
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 5,770
+Completed run for z_max2 = 1.5, len_long = 500
+----------------------------------------
+Updating file with z_max2 = 1.6
+File updated. Running prosperity3bt with z_max2 = 1.6, len_long2 = 500
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 1,742
+DJEMBES: 0
+JAMS: 567
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: 4,118
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 6,428
+Completed run for z_max2 = 1.6, len_long = 500
+----------------------------------------
+Updating file with z_max2 = 1.7
+File updated. Running prosperity3bt with z_max2 = 1.7, len_long2 = 500
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 1,668
+DJEMBES: 0
+JAMS: 519
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: 2,375
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 4,562
+Completed run for z_max2 = 1.7, len_long = 500
+----------------------------------------
+Updating file with z_max2 = 1.8
+File updated. Running prosperity3bt with z_max2 = 1.8, len_long2 = 500
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 1,912
+DJEMBES: 0
+JAMS: 805
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: 1,162
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 3,879
+Completed run for z_max2 = 1.8, len_long = 500
+----------------------------------------
+Updating file with z_max2 = 1.9
+File updated. Running prosperity3bt with z_max2 = 1.9, len_long2 = 500
+Backtesting /Users/mikhaillitvinov/Python_Projects/IMC_2025/Round_2/Gleb/PB1_ga.py on round 2 day 1
+CROISSANTS: 1,738
+DJEMBES: 0
+JAMS: 57
+KELP: 0
+PICNIC_BASKET1: 0
+PICNIC_BASKET2: 1,470
+RAINFOREST_RESIN: 0
+SQUID_INK: 0
+Total profit: 3,266
+Completed run for z_max2 = 1.9, len_long = 500
