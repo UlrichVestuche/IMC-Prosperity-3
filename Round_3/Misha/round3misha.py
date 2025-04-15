@@ -248,15 +248,36 @@ class Rock():
     def get_rock_vouchers_all(self, traderData: dict[str, Any]):
         return [self.get_mid_price(self.state.order_depths[symbol], traderData, symbol) for symbol in self.voucher_strikes.keys()]
     def IV(self, traderData: dict[str, Any]):
-        St= self.get_mid_price(self.state.order_depths["VOLCANIC_ROCK"], traderData, "VOLCANIC_ROCK")
+        St = self.get_mid_price(self.state.order_depths["VOLCANIC_ROCK"], traderData, "VOLCANIC_ROCK")
         IV_dict = {}
+        time_day = 10000 * 100
+        T = 7 * time_day
+        time_to_expiry = T - 10000 * 100 * current_day - self.state.timestamp
+        sqrt_time_to_expiry = np.sqrt(time_to_expiry)
         for symbol in self.voucher_strikes.keys():
             K = self.voucher_strikes[symbol]
-            time_day = 10000 * 100 
-            T = 7 * time_day
-            time_to_expiry = T - 10000* 100* current_day - self.state.timestamp
+            
+           
             voucher_price = self.get_mid_price(self.state.order_depths[symbol], traderData, symbol)
-            IV_dict[symbol] = BlackScholes.implied_volatility(voucher_price, St, K, time_to_expiry)
+            IV_dict[symbol + "_IV"] = BlackScholes.implied_volatility(voucher_price, St, K, time_to_expiry)
+         
+        # Fit a parabola to the 5 implied volatility points using transformed x-axis units
+        
+        # Transform each voucher strike into the x-axis unit: log(St/K) / sqrt(time_to_expiry)
+        x_points = np.array([
+            np.log(St / self.voucher_strikes[symbol]) / sqrt_time_to_expiry
+            for symbol in self.voucher_strikes.keys()
+        ])
+        y_points = np.array([IV_dict[symbol + "_IV"] for symbol in self.voucher_strikes.keys()])
+        if (0 in y_points) or (10**-7 in y_points):
+            logger.print("Skipping parabola fit due to invalid IV point(s)")
+        else:
+            coeffs = np.polyfit(x_points, y_points, 2)  # coeffs[0] is a, coeffs[1] is b, coeffs[2] is c
+            a = coeffs[0]
+            b = coeffs[1]
+            c = coeffs[2]
+            center = -b / (2 * a) if a != 0 else None
+            logger.print("Parabola fit: a =", a, ", center =", center, 'Volatility at center:', a*center**2 + b*center + c)
         return IV_dict
             
     def rock_hedge():
