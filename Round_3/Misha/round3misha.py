@@ -230,8 +230,9 @@ class Rock():
         'VOLCANIC_ROCK_VOUCHER_10000': 10000,
         'VOLCANIC_ROCK_VOUCHER_10250': 10250,
         'VOLCANIC_ROCK_VOUCHER_10500': 10500}
-    def get_limit(self):
-        return [self.state.position[product] for product in self.voucher_strikes.keys()].append(self.state.position["VOLCANIC_ROCK"])
+        self.voucher_limit = 200
+    def get_position(self):
+        return [self.state.position.get(product, 0) for product in self.voucher_strikes.keys()]
     def get_mid_price(
         self, rock_voucher: OrderDepth, traderData: dict[str, Any], name: str
     ):
@@ -262,7 +263,7 @@ class Rock():
             IV_dict[symbol + "_IV"] = BlackScholes.implied_volatility(voucher_price, St, K, time_to_expiry)
          
         # Fit a parabola to the 5 implied volatility points using transformed x-axis units
-        
+        residuals = None
         # Transform each voucher strike into the x-axis unit: log(St/K) / sqrt(time_to_expiry)
         x_points = np.array([
             np.log(St / self.voucher_strikes[symbol]) / sqrt_time_to_expiry
@@ -272,18 +273,98 @@ class Rock():
         if (0 in y_points) or (10**-7 in y_points):
             logger.print("Skipping parabola fit due to invalid IV point(s)")
         else:
-            coeffs = np.polyfit(x_points, y_points, 2)  # coeffs[0] is a, coeffs[1] is b, coeffs[2] is c
+            coeffs, residuals = self.fit_iv_parabola(x_points, y_points) 
             a = coeffs[0]
             b = coeffs[1]
             c = coeffs[2]
             center = -b / (2 * a) if a != 0 else None
-            logger.print("Parabola fit: a =", a, ", center =", center, 'Volatility at center:', a*center**2 + b*center + c)
-        return IV_dict
-            
-    def rock_hedge():
-        pass
-    def rock_orders():
-        pass
+            logger.print("Parabola fit: a =", a, ", center =", center, 'Volatility at center:', a*center**2 + b*center + c, 'Residuals:', residuals)
+        
+        return IV_dict, residuals
+    # Insert the following new method in the Rock class (for example, just before the IV method):
+
+    def fit_iv_parabola(self, x_points, y_points):
+        if (0 in y_points) or (10**-7 in y_points):
+            logger.print("Skipping parabola fit due to invalid IV point(s)")
+            return None, None
+        coeffs = np.polyfit(x_points, y_points, 2)
+        fitted_y = np.polyval(coeffs, x_points)
+        residuals = (y_points - fitted_y)/y_points
+        return coeffs, residuals
+    
+    def delta_vouchers(self,positions, IV_dict, St, time_to_expiry):
+        delta = 0
+        for i,symbol in enumerate(self.voucher_strikes.keys()):
+            delta += BlackScholes.delta(St, self.voucher_strikes[symbol], time_to_expiry, IV_dict[symbol + "_IV"]) * positions[i]
+        return delta
+    
+    def hedge_rock(self, positions, IV_dict, St, time_to_expiry):
+        delta = self.delta_vouchers(positions, IV_dict, St, time_to_expiry)
+        delta_rock = 1
+        delta_hedge = delta - delta_rock
+        delta_hedge_volume = int(delta_hedge * self.position)
+        return delta_hedge_volume
+        
+
+    def rock_orders(self, traderData: dict[str, Any]):
+        soft_limit = 15
+        res = 0.03
+        positions = self.get_position()
+        prices  = self.get_rock_vouchers_all(traderData)
+        IV_dict, residuals = self.IV(traderData)
+        orders = {}
+        if residuals is None:
+            return {}
+        #Portfolio = {}
+        for i, symbol in enumerate(self.voucher_strikes.keys()):
+            if residuals[i] > res:
+                
+                if self.state.order_depths[symbol].sell_orders:
+                    buy_price = min(self.state.order_depths[symbol].sell_orders.keys())
+                    volume = abs(self.state.order_depths[symbol].sell_orders[buy_price])
+                    
+                    buy_volume = min(volume, self.voucher_limit - positions[i])
+                    logger.print(symbol, f"Volume: {buy_volume}", f"Position: {positions[i]}")
+                ## Trade first voucher volume
+                    if buy_volume > 0:
+                        orders[symbol] = [Order(symbol, buy_price, buy_volume)]
+                        
+                else:
+                    orders = {}
+                    break
+                    
+                    
+            elif residuals[i] < -res:
+                if self.state.order_depths[symbol].buy_orders:
+
+                    sell_price = max(self.state.order_depths[symbol].buy_orders.keys())
+                    volume = abs(self.state.order_depths[symbol].buy_orders[sell_price])
+                    sell_volume = min(volume, self.voucher_limit + positions[i])
+                    logger.print(symbol, f"Volume: {sell_volume}", f"Position: {positions[i]}")
+                    if sell_volume > 0:
+                        orders[symbol] = [Order(symbol, sell_price, -sell_volume)]
+                else:
+                    orders = {}
+                    break
+
+
+        St = self.get_mid_price(self.state.order_depths["VOLCANIC_ROCK"], traderData, "VOLCANIC_ROCK")
+        time_day = 10000 * 100 
+        T = 7 * time_day
+        time_to_expiry = T - 10000 * 100 * current_day - self.state.timestamp
+
+
+        delta_hedge_volume = self.hedge_rock(positions, IV_dict, St, time_to_expiry)
+        logger.print(f"Delta hedge volume: {delta_hedge_volume}")
+        position_rock = self.state.position.get("VOLCANIC_ROCK", 0)
+        if delta_hedge_volume > 0:
+            delta_hedge_volume = min(delta_hedge_volume, self.position_limit - position_rock)
+            orders["VOLCANIC_ROCK"] = [Order("VOLCANIC_ROCK", self.state.order_depths["VOLCANIC_ROCK"].sell_orders[0], delta_hedge_volume)]
+        elif delta_hedge_volume < 0:
+            delta_hedge_volume = min(delta_hedge_volume, self.position_limit + position_rock)
+            orders["VOLCANIC_ROCK"] = [Order("VOLCANIC_ROCK", self.state.order_depths["VOLCANIC_ROCK"].buy_orders[0], -delta_hedge_volume)]
+        
+        return orders
 
 #########################
 
@@ -1113,8 +1194,18 @@ class Trader:
 
         if "VOLCANIC_ROCK_VOUCHER_9500" in state.order_depths:
             rock = Rock(state=state)
-            rock_vouchers = rock.IV(traderObject)
+            rock_vouchers = rock.rock_orders(traderObject)
             logger.print(rock_vouchers)
+            if rock_vouchers.get("VOLCANIC_ROCK_VOUCHER_9500", None) is not None:
+                result["VOLCANIC_ROCK_VOUCHER_9500"] = rock_vouchers["VOLCANIC_ROCK_VOUCHER_9500"]
+            if rock_vouchers.get("VOLCANIC_ROCK_VOUCHER_9750", None) is not None:
+                result["VOLCANIC_ROCK_VOUCHER_9750"] = rock_vouchers["VOLCANIC_ROCK_VOUCHER_9750"]
+            if rock_vouchers.get("VOLCANIC_ROCK_VOUCHER_10000", None) is not None:
+                result["VOLCANIC_ROCK_VOUCHER_10000"] = rock_vouchers["VOLCANIC_ROCK_VOUCHER_10000"]
+            if rock_vouchers.get("VOLCANIC_ROCK_VOUCHER_10250", None) is not None:
+                result["VOLCANIC_ROCK_VOUCHER_10250"] = rock_vouchers["VOLCANIC_ROCK_VOUCHER_10250"]
+            if rock_vouchers.get("VOLCANIC_ROCK_VOUCHER_10500", None) is not None:
+                result["VOLCANIC_ROCK_VOUCHER_10500"] = rock_vouchers["VOLCANIC_ROCK_VOUCHER_10500"]
 
         #traderData = jsonpickle.encode(PB_dict['Dict_Spreads'])
         # logger.print("position:",self.position)
