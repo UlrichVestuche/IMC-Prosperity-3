@@ -282,58 +282,90 @@ class Rock():
             logger.print("Skipping points with low IV")
             return IV_dict, None
 
-        time_window = 1
+        time_window = 2
 
 
-        
-        if traderData.get('parabola_x', None) is None:
-            traderData['parabola_x'] = x_points
-            traderData['parabola_y'] = y_points
-        elif len(traderData['parabola_x']) >= 5 * time_window:
-            
-            # Only use the last 5 * time_window points for fitting
-            x_sample = traderData['parabola_x'][-5 * time_window:]
-            y_sample = traderData['parabola_y'][-5 * time_window:]
-
-            coeffs = self.fit_iv_parabola(x_sample, y_sample)
+        if (0 in y_points) or (10**-7 in y_points):
+            logger.print("Skipping parabola fit due to invalid IV point(s)")
+        else:
+            coeffs= self.fit_iv_parabola(x_points, y_points) 
             a = coeffs[0]
             b = coeffs[1]
             c = coeffs[2]
             center = -b / (2 * a) if a != 0 else None
-            logger.print("Parabola fit: a =", a, ", center =", center, 'Volatility at center:', a * center**2 + b * center + c)
-            traderData['parabola_coeffs'] = coeffs.tolist()
+            logger.print("Parabola fit: a =", a, ", center =", center, 'Volatility at center:', a*center**2 + b*center + c, 'Residuals:', residuals)
+            residuals = ((y_points - np.polyval(coeffs, x_points)) / y_points).tolist()
+            logger.print("Residuals:", residuals)
 
-            traderData['parabola_x'] = x_points
-            traderData['parabola_y'] = y_points
-        else:
-            traderData['parabola_x'].extend(x_points)
-            traderData['parabola_y'].extend(y_points)
+
+
+        # if traderData.get('parabola_x', None) is None:
+        #     traderData['parabola_x'] = x_points
+        #     traderData['parabola_y'] = y_points
+        # elif len(traderData['parabola_x']) >= 5 * time_window:
             
-            if traderData.get('parabola_coeffs', None) is not None:
-                x_arr = np.array(x_points)
-                y_arr = np.array(y_points)
-                residuals = ((y_arr - np.polyval(traderData['parabola_coeffs'], x_arr)) / y_arr).tolist()
-                logger.print("Residuals:", residuals)
-            else:
-                residuals = None
-            #logger.print(x_points, y_points)
+        #     # Only use the last 5 * time_window points for fitting
+        #     x_sample = traderData['parabola_x'][-5 * time_window:]
+        #     y_sample = traderData['parabola_y'][-5 * time_window:]
+
+        #     coeffs = self.fit_iv_parabola(x_sample, y_sample)
+        #     a = coeffs[0]
+        #     b = coeffs[1]
+        #     c = coeffs[2]
+        #     center = -b / (2 * a) if a != 0 else None
+        #     logger.print("Parabola fit: a =", a, ", center =", center, 'Volatility at center:', a * center**2 + b * center + c)
+        #     traderData['parabola_coeffs'] = coeffs.tolist()
+
+        #     traderData['parabola_x'] = x_points
+        #     traderData['parabola_y'] = y_points
+        # else:
+        #     traderData['parabola_x'].extend(x_points)
+        #     traderData['parabola_y'].extend(y_points)
+            
+        # if traderData.get('parabola_coeffs', None) is not None:
+        #     x_arr = np.array(x_points)
+        #     y_arr = np.array(y_points)
+        #     residuals = ((y_arr - np.polyval(traderData['parabola_coeffs'], x_arr)) / y_arr).tolist()
+        #     logger.print("Residuals:", residuals)
+        # else:
+        #     residuals = None
+        # logger.print(x_points, y_points)
         # logger.print(traderData['parabola_x'])
         # logger.print(traderData['parabola_y'])
         
         return IV_dict, residuals
     # Insert the following new method in the Rock class (for example, just before the IV method):
-
     def fit_iv_parabola(self, x_points, y_points):
-        #logger.print(x_points)
-        #logger.print(y_points)
-        x_points =  np.array(x_points)
-        y_points =  np.array(y_points)
+        x_points = np.array(x_points)
+        y_points = np.array(y_points)
         
+        # Skip the fit if any y point is 0 or too close to 0 (as before)
         if (0 in y_points) or (10**-7 in y_points):
             logger.print("Skipping parabola fit due to invalid IV point(s)")
             return None
-        coeffs = np.polyfit(x_points, y_points, 2)
-        return coeffs
+        
+        # Construct the design matrix for the model f(x) = a * x^2 + c.
+        # We only use x^2 and a constant (no x term), ensuring the curve passes through m_t = 0.
+        M = np.vstack([x_points**2, np.ones(len(x_points))]).T
+        
+        # Solve the least squares problem to obtain coefficients [a, c]
+        coeffs, residuals, rank, s = np.linalg.lstsq(M, y_points, rcond=None)
+        a, c = coeffs
+        
+        # Return the full quadratic coefficients, in the form [a, 0, c]
+        # so that f(x) = a*x^2 + 0*x + c.
+        return np.array([a, 0.0, c])
+    # def fit_iv_parabola(self, x_points, y_points):
+    #     #logger.print(x_points)
+    #     #logger.print(y_points)
+    #     x_points =  np.array(x_points)
+    #     y_points =  np.array(y_points)
+        
+    #     if (0 in y_points) or (10**-7 in y_points):
+    #         logger.print("Skipping parabola fit due to invalid IV point(s)")
+    #         return None
+    #     coeffs = np.polyfit(x_points, y_points, 2)
+    #     return coeffs
     
     def delta_vouchers(self,positions, IV_dict, St, time_to_expiry, Portfolio):
         delta = 0
@@ -353,7 +385,8 @@ class Rock():
 
     def rock_orders(self, traderData: dict[str, Any]):
         soft_limit = 15
-        res = 0.005
+        res = 0.05
+        exit = 0.01
         positions = self.get_position()
         prices  = self.get_rock_vouchers_all(traderData)
     
@@ -368,7 +401,7 @@ class Rock():
         
 
         for i, symbol in enumerate(self.voucher_strikes.keys()):
-            if residuals[i] < -res:# and symbol == "VOLCANIC_ROCK_VOUCHER_10250":
+            if residuals[i] < -res and symbol == "VOLCANIC_ROCK_VOUCHER_10000":
                 
                 if self.state.order_depths[symbol].sell_orders:
                     buy_price = min(self.state.order_depths[symbol].sell_orders.keys())
@@ -386,7 +419,7 @@ class Rock():
                     break
                     
                     
-            elif residuals[i] > res:# and symbol == "VOLCANIC_ROCK_VOUCHER_10250":
+            elif residuals[i] > res and symbol == "VOLCANIC_ROCK_VOUCHER_10000":
                 if self.state.order_depths[symbol].buy_orders:
 
                     sell_price = max(self.state.order_depths[symbol].buy_orders.keys())
@@ -399,7 +432,26 @@ class Rock():
                 else:
                     orders = {}
                     break
-
+            elif residuals[i] < exit:
+                if positions[symbol] < 0:
+                    if self.state.order_depths[symbol].sell_orders:
+                        buy_price = min(self.state.order_depths[symbol].sell_orders.keys())
+                        volume = abs(self.state.order_depths[symbol].sell_orders[buy_price])
+                    
+                        buy_volume = min(volume, self.voucher_limit - positions[symbol])
+                        logger.print(symbol, f"Volume: {buy_volume}", f"Position: {positions[symbol]}")
+                ## Trade first voucher volume
+                    if buy_volume > 0:
+                        orders[symbol] = [Order(symbol, buy_price, buy_volume)]
+                        Portfolio[symbol] = buy_volume
+            elif residuals[i] > -exit:
+                if positions[symbol] > 0:
+                    if self.state.order_depths[symbol].buy_orders:
+                        sell_price = max(self.state.order_depths[symbol].buy_orders.keys())
+                        volume = abs(self.state.order_depths[symbol].buy_orders[sell_price])
+                        
+                        sell_volume = min(volume, self.voucher_limit + positions[symbol])
+                        logger.print(symbol, f"Volume: {sell_volume}", f"Position: {positions[symbol]}")
 
         St = self.get_mid_price(self.state.order_depths["VOLCANIC_ROCK"], traderData, "VOLCANIC_ROCK")
         time_day = 10000 * 100 
