@@ -13,20 +13,20 @@ from typing import Any
 # len_long1 = 900
 
 
-current_day = 2
+current_day = 3
 
 
 
 z_max1 = 1.8
 
-len_long1 = 90000
+len_long1 = 9000
 
 
 # len_long2 = 300
-len_long2 = 90000
+len_long2 = 9000
 z_max2 =  1.5
 
-STD_SQUID_INK_PREV_DAY = 10.7
+STD_SQUID_INK_PREV_DAY = 8.7
 
 price_spread = {'PICNIC_BASKET1': 2,'PICNIC_BASKET2': 1,'CROISSANTS': 2,'JAMS': 1,'DJEMBES': 1}
 price_max_pb1 = 4
@@ -280,55 +280,55 @@ class Rock():
 
         if any(abs(v) <= 0.7* 10**-5 for v in y_points):
             logger.print("Skipping points with low IV")
-            return IV_dict, None
+            return None, None
 
-        time_window = 2
-
-
-        if (0 in y_points) or (10**-7 in y_points):
-            logger.print("Skipping parabola fit due to invalid IV point(s)")
-        else:
-            coeffs= self.fit_iv_parabola(x_points, y_points) 
-            a = coeffs[0]
-            b = coeffs[1]
-            c = coeffs[2]
-            center = -b / (2 * a) if a != 0 else None
-            logger.print("Parabola fit: a =", a, ", center =", center, 'Volatility at center:', a*center**2 + b*center + c, 'Residuals:', residuals)
-            residuals = ((y_points - np.polyval(coeffs, x_points)) / y_points).tolist()
-            logger.print("Residuals:", residuals)
+        time_window = 100
 
 
-
-        # if traderData.get('parabola_x', None) is None:
-        #     traderData['parabola_x'] = x_points
-        #     traderData['parabola_y'] = y_points
-        # elif len(traderData['parabola_x']) >= 5 * time_window:
-            
-        #     # Only use the last 5 * time_window points for fitting
-        #     x_sample = traderData['parabola_x'][-5 * time_window:]
-        #     y_sample = traderData['parabola_y'][-5 * time_window:]
-
-        #     coeffs = self.fit_iv_parabola(x_sample, y_sample)
+        # if (0 in y_points) or (10**-7 in y_points):
+        #     logger.print("Skipping parabola fit due to invalid IV point(s)")
+        # else:
+        #     coeffs= self.fit_iv_parabola(x_points, y_points) 
         #     a = coeffs[0]
         #     b = coeffs[1]
         #     c = coeffs[2]
         #     center = -b / (2 * a) if a != 0 else None
-        #     logger.print("Parabola fit: a =", a, ", center =", center, 'Volatility at center:', a * center**2 + b * center + c)
-        #     traderData['parabola_coeffs'] = coeffs.tolist()
-
-        #     traderData['parabola_x'] = x_points
-        #     traderData['parabola_y'] = y_points
-        # else:
-        #     traderData['parabola_x'].extend(x_points)
-        #     traderData['parabola_y'].extend(y_points)
-            
-        # if traderData.get('parabola_coeffs', None) is not None:
-        #     x_arr = np.array(x_points)
-        #     y_arr = np.array(y_points)
-        #     residuals = ((y_arr - np.polyval(traderData['parabola_coeffs'], x_arr)) / y_arr).tolist()
+        #     logger.print("Parabola fit: a =", a, ", center =", center, 'Volatility at center:', a*center**2 + b*center + c, 'Residuals:', residuals)
+        #     residuals = ((y_points - np.polyval(coeffs, x_points)) / y_points).tolist()
         #     logger.print("Residuals:", residuals)
-        # else:
-        #     residuals = None
+
+
+
+        if traderData.get('parabola_x', None) is None:
+            traderData['parabola_x'] = x_points
+            traderData['parabola_y'] = y_points
+        elif len(traderData['parabola_x']) >= 5 * time_window:
+            
+            # Only use the last 5 * time_window points for fitting
+            x_sample = traderData['parabola_x'][-5 * time_window:]
+            y_sample = traderData['parabola_y'][-5 * time_window:]
+
+            coeffs = self.fit_iv_parabola(x_sample, y_sample)
+            a = coeffs[0]
+            b = coeffs[1]
+            c = coeffs[2]
+            center = -b / (2 * a) if a != 0 else None
+            logger.print("Parabola fit: a =", a, ", center =", center, 'Volatility at center:', a * center**2 + b * center + c)
+            traderData['parabola_coeffs'] = coeffs.tolist()
+
+            traderData['parabola_x'] = x_points
+            traderData['parabola_y'] = y_points
+        else:
+            traderData['parabola_x'].extend(x_points)
+            traderData['parabola_y'].extend(y_points)
+            
+        if traderData.get('parabola_coeffs', None) is not None:
+            x_arr = np.array(x_points)
+            y_arr = np.array(y_points)
+            residuals = ((y_arr - np.polyval(traderData['parabola_coeffs'], x_arr)) / y_arr).tolist()
+            logger.print("Residuals:", residuals)
+        else:
+            residuals = None
         # logger.print(x_points, y_points)
         # logger.print(traderData['parabola_x'])
         # logger.print(traderData['parabola_y'])
@@ -385,8 +385,12 @@ class Rock():
 
     def rock_orders(self, traderData: dict[str, Any]):
         soft_limit = 15
-        res = 0.05
+        res = 0.04
         exit = 0.01
+
+        delta_upper_limit = 0.9
+        delta_lower_limit = 0.4
+        
         positions = self.get_position()
         prices  = self.get_rock_vouchers_all(traderData)
     
@@ -398,10 +402,35 @@ class Rock():
         if residuals is None:
             return {}
         Portfolio = {}
-        
+        St = self.get_mid_price(self.state.order_depths["VOLCANIC_ROCK"], traderData, "VOLCANIC_ROCK")
+        time_day = 10000 * 100 
+        T = 7 * time_day
+        time_to_expiry = T - 10000 * 100 * current_day - self.state.timestamp
 
         for i, symbol in enumerate(self.voucher_strikes.keys()):
-            if residuals[i] < -res and symbol == "VOLCANIC_ROCK_VOUCHER_10000":
+            if IV_dict is not None:
+                delta_voucher = BlackScholes.delta(St, self.voucher_strikes[symbol], time_to_expiry, IV_dict[symbol + "_IV"])
+            if IV_dict is not None and (delta_voucher < delta_lower_limit or delta_voucher > delta_upper_limit):
+                non_trade = True
+                # if positions[symbol] > 0:
+                #     if self.state.order_depths[symbol].buy_orders:
+                #         sell_price = max(self.state.order_depths[symbol].buy_orders.keys())
+                #         volume = abs(self.state.order_depths[symbol].buy_orders[sell_price])
+                        
+                #         sell_volume = min(volume, self.voucher_limit + positions[symbol])
+                #         if sell_volume > 0:
+                #             orders[symbol] = [Order(symbol, sell_price, -sell_volume)]
+                #             Portfolio[symbol] = -sell_volume
+                # elif positions[symbol] < 0:
+                #     if self.state.order_depths[symbol].sell_orders:
+                #         buy_price = min(self.state.order_depths[symbol].sell_orders.keys())
+                #         volume = abs(self.state.order_depths[symbol].sell_orders[buy_price])
+                        
+                #         buy_volume = min(volume, self.voucher_limit - positions[symbol])
+                #         if buy_volume > 0:
+                #             orders[symbol] = [Order(symbol, buy_price, buy_volume)]
+                #             Portfolio[symbol] = buy_volume        
+            elif residuals[i] < -res: #and symbol == "VOLCANIC_ROCK_VOUCHER_10000":
                 
                 if self.state.order_depths[symbol].sell_orders:
                     buy_price = min(self.state.order_depths[symbol].sell_orders.keys())
@@ -419,7 +448,7 @@ class Rock():
                     break
                     
                     
-            elif residuals[i] > res and symbol == "VOLCANIC_ROCK_VOUCHER_10000":
+            elif residuals[i] > res:# and symbol == "VOLCANIC_ROCK_VOUCHER_10000":
                 if self.state.order_depths[symbol].buy_orders:
 
                     sell_price = max(self.state.order_depths[symbol].buy_orders.keys())
@@ -452,26 +481,36 @@ class Rock():
                         
                         sell_volume = min(volume, self.voucher_limit + positions[symbol])
                         logger.print(symbol, f"Volume: {sell_volume}", f"Position: {positions[symbol]}")
+                        if sell_volume > 0:
+                            orders[symbol] = [Order(symbol, sell_price, -sell_volume)]
+                            Portfolio[symbol] = -sell_volume
 
-        St = self.get_mid_price(self.state.order_depths["VOLCANIC_ROCK"], traderData, "VOLCANIC_ROCK")
-        time_day = 10000 * 100 
-        T = 7 * time_day
-        time_to_expiry = T - 10000 * 100 * current_day - self.state.timestamp
+       
 
-
-        delta_hedge_volume = self.hedge_rock(positions, IV_dict, St, time_to_expiry, Portfolio)
-        logger.print(f"Delta hedge volume: {delta_hedge_volume}")
-        position_rock = self.state.position.get("VOLCANIC_ROCK", 0)
-        if delta_hedge_volume < 0:
-            delta_hedge_volume = min(delta_hedge_volume, self.position_limit - position_rock)
-            if self.state.order_depths["VOLCANIC_ROCK"].sell_orders:
-                buy_price = min(self.state.order_depths["VOLCANIC_ROCK"].sell_orders.keys())
-                orders["VOLCANIC_ROCK"] = [Order("VOLCANIC_ROCK", buy_price, abs(delta_hedge_volume))]
-        elif delta_hedge_volume > 0:
-            delta_hedge_volume = min(delta_hedge_volume, self.position_limit + position_rock)
-            if self.state.order_depths["VOLCANIC_ROCK"].buy_orders:
-                sell_price = max(self.state.order_depths["VOLCANIC_ROCK"].buy_orders.keys())
-                orders["VOLCANIC_ROCK"] = [Order("VOLCANIC_ROCK", sell_price, -abs(delta_hedge_volume))]
+        if IV_dict is not None:
+            delta_hedge_volume = self.hedge_rock(positions, IV_dict, St, time_to_expiry, Portfolio)
+            logger.print(f"Delta hedge volume: {delta_hedge_volume}")
+            position_rock = self.state.position.get("VOLCANIC_ROCK", 0)
+            if delta_hedge_volume < -20:
+                delta_hedge_volume = min(delta_hedge_volume, self.position_limit - position_rock)
+                if self.state.order_depths["VOLCANIC_ROCK"].sell_orders:
+                    buy_price = min(self.state.order_depths["VOLCANIC_ROCK"].sell_orders.keys())
+                    orders["VOLCANIC_ROCK"] = [Order("VOLCANIC_ROCK", buy_price, abs(delta_hedge_volume))]
+            elif delta_hedge_volume > 20:
+                delta_hedge_volume = min(delta_hedge_volume, self.position_limit + position_rock)
+                if self.state.order_depths["VOLCANIC_ROCK"].buy_orders:
+                    sell_price = max(self.state.order_depths["VOLCANIC_ROCK"].buy_orders.keys())
+                    orders["VOLCANIC_ROCK"] = [Order("VOLCANIC_ROCK", sell_price, -abs(delta_hedge_volume))]
+            elif delta_hedge_volume < 0:
+                delta_hedge_volume = min(delta_hedge_volume, self.position_limit - position_rock)
+                if self.state.order_depths["VOLCANIC_ROCK"].sell_orders:
+                    buy_price = min(self.state.order_depths["VOLCANIC_ROCK"].sell_orders.keys())
+                    orders["VOLCANIC_ROCK"] = [Order("VOLCANIC_ROCK", buy_price-1, abs(delta_hedge_volume))]
+            elif delta_hedge_volume > 0:
+                delta_hedge_volume = min(delta_hedge_volume, self.position_limit + position_rock)
+                if self.state.order_depths["VOLCANIC_ROCK"].buy_orders:
+                    sell_price = max(self.state.order_depths["VOLCANIC_ROCK"].buy_orders.keys())
+                    orders["VOLCANIC_ROCK"] = [Order("VOLCANIC_ROCK", sell_price+1, -abs(delta_hedge_volume))]         
         
         return orders
 
@@ -1054,17 +1093,17 @@ class Trader:
         #     z_val2 = (spread_price2 - win_average2) / win_stdev2
         # else:
         #     z_val2 = 0
-
-        if spread_price1 - win_average1 > 0:
+        band = 20
+        if spread_price1 - win_average1 > band:
             z_val1 = 30
-        elif spread_price1 - win_average1 < 0:
+        elif spread_price1 - win_average1 < -band:
             z_val1 = -30
         else:
             z_val1 = 0
 
-        if spread_price2 - win_average2 > 0:
+        if spread_price2 - win_average2 > band:
             z_val2 = 30
-        elif spread_price2 - win_average2 < 0:
+        elif spread_price2 - win_average2 < -band:
             z_val2 = -30
         else:
             z_val2 = 0
@@ -1255,50 +1294,52 @@ class Trader:
 
        
     
-        # PB_dict = {}
-        # # Check if RAINFOREST_RESIN is available in the current market data
-        # if "RAINFOREST_RESIN" in state.order_depths:
-        #     # # Get current position for RAINFOREST_RESIN, defaulting to 0 if not present
-        #     # resin_position = state.position["RAINFOREST_RESIN"] if "RAINFOREST_RESIN" in state.position else 0
-        #     # # # Set up the trading context with the latest market data and parameters
-        #     # self.set_context(state.order_depths["RAINFOREST_RESIN"], 10000, 2, resin_position, 50, "RAINFOREST_RESIN")
-        #     # # # Generate trading orders for RAINFOREST_RESIN
-        #     # resin_orders = self.resin_orders()
-        #     # result["RAINFOREST_RESIN"] = resin_orders
-        #     result["RAINFOREST_RESIN"] = self.resin_ord(state) 
+        PB_dict = {}
+        # Check if RAINFOREST_RESIN is available in the current market data
+        if "RAINFOREST_RESIN" in state.order_depths:
+            # # Get current position for RAINFOREST_RESIN, defaulting to 0 if not present
+            # resin_position = state.position["RAINFOREST_RESIN"] if "RAINFOREST_RESIN" in state.position else 0
+            # # # Set up the trading context with the latest market data and parameters
+            # self.set_context(state.order_depths["RAINFOREST_RESIN"], 10000, 2, resin_position, 50, "RAINFOREST_RESIN")
+            # # # Generate trading orders for RAINFOREST_RESIN
+            # resin_orders = self.resin_orders()
+            # result["RAINFOREST_RESIN"] = resin_orders
+            result["RAINFOREST_RESIN"] = self.resin_ord(state) 
 
 
-        # if "KELP" in state.order_depths:
-        #     kelp_position = state.position["KELP"] if "KELP" in state.position else 0
-        #     # Calculate fair price for KELP using the new function
-        #     fair_value_for_kelp = self.kelp_fair_value(state.order_depths["KELP"], traderObject)
-        #     self.set_context(state.order_depths["KELP"], fair_value_for_kelp, 2, kelp_position, 50, 'KELP')
-        #     kelp_orders = self.kelp_orders()
-        #     result["KELP"] = kelp_orders
+        if "KELP" in state.order_depths:
+            kelp_position = state.position["KELP"] if "KELP" in state.position else 0
+            # Calculate fair price for KELP using the new function
+            fair_value_for_kelp = self.kelp_fair_value(state.order_depths["KELP"], traderObject)
+            self.set_context(state.order_depths["KELP"], fair_value_for_kelp, 2, kelp_position, 50, 'KELP')
+            kelp_orders = self.kelp_orders()
+            result["KELP"] = kelp_orders
         
-        # if "SQUID_INK" in state.order_depths:
+        if "SQUID_INK" in state.order_depths:
             
-        #     squid_ink_position = state.position["SQUID_INK"] if "SQUID_INK" in state.position else 0
-        #     # Calculate fair price for SQUID_INK using the new function
-        #     last_price = traderObject["squid_ink_last_price"] if traderObject.get("squid_ink_last_price", None) is not None else None
-        #     fair_value_for_squid_ink = self.squid_ink_fair_value(state.order_depths["SQUID_INK"], traderObject)
-        #     self.set_context(state.order_depths["SQUID_INK"], fair_value_for_squid_ink, 2, squid_ink_position, 50, 'SQUID_INK')
-        #     squid_ink_orders = self.ink_orders()
+            squid_ink_position = state.position["SQUID_INK"] if "SQUID_INK" in state.position else 0
+            # Calculate fair price for SQUID_INK using the new function
+            last_price = traderObject["squid_ink_last_price"] if traderObject.get("squid_ink_last_price", None) is not None else None
+            fair_value_for_squid_ink = self.squid_ink_fair_value(state.order_depths["SQUID_INK"], traderObject)
+            self.set_context(state.order_depths["SQUID_INK"], fair_value_for_squid_ink, 2, squid_ink_position, 50, 'SQUID_INK')
+            squid_ink_orders = self.ink_orders()
             
-        #     result["SQUID_INK"] = squid_ink_orders 
-        #     # if state.timestamp < 5000:
-        #     #     result["SQUID_INK"] = []
+            result["SQUID_INK"] = squid_ink_orders 
+            # if state.timestamp < 5000:
+            #     result["SQUID_INK"] = []
 
-        # if "PICNIC_BASKET2" in state.order_depths:
-        #     PB_dict = self.pb_ord(state, traderObject)
+        if "PICNIC_BASKET2" in state.order_depths:
+            # if state.timestamp > 5000:
 
-        #     result["PICNIC_BASKET1"] = PB_dict['pb1']
-        #     result["PICNIC_BASKET2"] = PB_dict['pb2']
-        #     result["CROISSANTS"] = PB_dict['cro']
-        #     result["JAMS"] = PB_dict['jam']
-        #     result["DJEMBES"] = PB_dict['djem']
+            PB_dict = self.pb_ord(state, traderObject)
 
-        #     logger.print(PB_dict['pb2'])
+            result["PICNIC_BASKET1"] = PB_dict['pb1']
+            result["PICNIC_BASKET2"] = PB_dict['pb2']
+            result["CROISSANTS"] = PB_dict['cro']
+            result["JAMS"] = PB_dict['jam']
+            result["DJEMBES"] = PB_dict['djem']
+
+            logger.print(PB_dict['pb2'])
         
 
         if "VOLCANIC_ROCK_VOUCHER_9500" in state.order_depths:
