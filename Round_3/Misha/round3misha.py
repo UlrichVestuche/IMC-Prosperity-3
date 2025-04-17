@@ -382,14 +382,64 @@ class Rock():
         delta_hedge_volume = int(delta_hedge)
         return delta_hedge_volume
         
-
+    def buy_atm_call(self, traderData: dict[str, Any], volume: int = None) -> dict[str, list[Order]]:
+        """
+        Buy an ATM call option voucher and hold it.
+        """
+        # Get current underlying mid price
+        St = self.get_mid_price(self.state.order_depths["VOLCANIC_ROCK"], traderData, "VOLCANIC_ROCK")
+        # Identify ATM strike symbol (closest strike to St)
+        atm_symbol = min(self.voucher_strikes.items(), key=lambda kv: abs(kv[1] - St))[0]
+        # Calculate desired volume: fill up to voucher_limit
+        current_pos = self.state.position.get(atm_symbol, 0)
+        desired = self.voucher_limit - current_pos
+        vol = volume if volume is not None else desired
+        if vol <= 0:
+            return {}
+        # Place buy order at best ask
+        order_depth = self.state.order_depths[atm_symbol]
+        if not order_depth.sell_orders:
+            return {}
+        best_ask = min(order_depth.sell_orders.keys())
+        size = min(vol, order_depth.sell_orders[best_ask])
+             # record entry price for exit logic
+        if 'atm_entry_price' not in traderData:
+            traderData['atm_entry_price'] = best_ask
+        return {atm_symbol: [Order(atm_symbol, best_ask, size)]}
+    def exit_atm_call(self, traderData: dict[str, Any], profit_target: float = 1.5) -> dict[str, list[Order]]:
+        """
+        Exit the ATM call when profit target is reached.
+        """
+        entry = traderData.get('atm_entry_price')
+        # find ATM symbol based on current mid price
+        St = self.get_mid_price(self.state.order_depths["VOLCANIC_ROCK"], traderData, "VOLCANIC_ROCK")
+        atm_symbol = min(self.voucher_strikes.items(), key=lambda kv: abs(kv[1] - St))[0]
+        pos = self.state.position.get(atm_symbol, 0)
+        if entry is None or pos <= 0:
+            return {}
+        order_depth = self.state.order_depths[atm_symbol]
+        if not order_depth.buy_orders:
+            return {}
+        best_bid = max(order_depth.buy_orders.keys())
+        # exit when bid price exceeds target
+        if best_bid >= entry * profit_target:
+            traderData.pop('atm_entry_price', None)
+            return {atm_symbol: [Order(atm_symbol, best_bid, -pos)]}
+        return {}
     def rock_orders(self, traderData: dict[str, Any]):
+        # check ATM exit first
+        exit_orders = {}
+        
+        exit_orders = self.exit_atm_call(traderData)
+        if exit_orders:
+            return exit_orders
+        
         soft_limit = 15
-        res = 0.04
-        exit = 0.01
+        res = [0.04, 0.04, 0.04, 0.04, 0.04]
+        exit = [0.01, 0.01, 0.01, 0.01, 0.01]
 
         delta_upper_limit = 0.9
-        delta_lower_limit = 0.4
+        delta_lower_limit = 0.1
         
         positions = self.get_position()
         prices  = self.get_rock_vouchers_all(traderData)
@@ -397,93 +447,98 @@ class Rock():
             
         IV_dict, residuals = self.IV(traderData)
         orders = {}
+        orders = self.buy_atm_call(traderData)
+
         if traderData.get('parabola_coeffs', None) is not None:
             logger.print(traderData['parabola_coeffs'])
         if residuals is None:
-            return {}
+            return exit_orders
+        
         Portfolio = {}
         St = self.get_mid_price(self.state.order_depths["VOLCANIC_ROCK"], traderData, "VOLCANIC_ROCK")
         time_day = 10000 * 100 
         T = 7 * time_day
         time_to_expiry = T - 10000 * 100 * current_day - self.state.timestamp
 
-        for i, symbol in enumerate(self.voucher_strikes.keys()):
-            if IV_dict is not None:
-                delta_voucher = BlackScholes.delta(St, self.voucher_strikes[symbol], time_to_expiry, IV_dict[symbol + "_IV"])
-            if IV_dict is not None and (delta_voucher < delta_lower_limit or delta_voucher > delta_upper_limit):
-                non_trade = True
-                # if positions[symbol] > 0:
-                #     if self.state.order_depths[symbol].buy_orders:
-                #         sell_price = max(self.state.order_depths[symbol].buy_orders.keys())
-                #         volume = abs(self.state.order_depths[symbol].buy_orders[sell_price])
-                        
-                #         sell_volume = min(volume, self.voucher_limit + positions[symbol])
-                #         if sell_volume > 0:
-                #             orders[symbol] = [Order(symbol, sell_price, -sell_volume)]
-                #             Portfolio[symbol] = -sell_volume
-                # elif positions[symbol] < 0:
-                #     if self.state.order_depths[symbol].sell_orders:
-                #         buy_price = min(self.state.order_depths[symbol].sell_orders.keys())
-                #         volume = abs(self.state.order_depths[symbol].sell_orders[buy_price])
-                        
-                #         buy_volume = min(volume, self.voucher_limit - positions[symbol])
-                #         if buy_volume > 0:
-                #             orders[symbol] = [Order(symbol, buy_price, buy_volume)]
-                #             Portfolio[symbol] = buy_volume        
-            elif residuals[i] < -res: #and symbol == "VOLCANIC_ROCK_VOUCHER_10000":
-                
-                if self.state.order_depths[symbol].sell_orders:
-                    buy_price = min(self.state.order_depths[symbol].sell_orders.keys())
-                    volume = abs(self.state.order_depths[symbol].sell_orders[buy_price])
+        Z_trade =False
+        if Z_trade:
+            for i, symbol in enumerate(self.voucher_strikes.keys()):
+                if IV_dict is not None:
+                    delta_voucher = BlackScholes.delta(St, self.voucher_strikes[symbol], time_to_expiry, IV_dict[symbol + "_IV"])
+                if IV_dict is not None and (delta_voucher < delta_lower_limit or delta_voucher > delta_upper_limit):
+                    non_trade = True
+                    # if positions[symbol] > 0:
+                    #     if self.state.order_depths[symbol].buy_orders:
+                    #         sell_price = max(self.state.order_depths[symbol].buy_orders.keys())
+                    #         volume = abs(self.state.order_depths[symbol].buy_orders[sell_price])
+                            
+                    #         sell_volume = min(volume, self.voucher_limit + positions[symbol])
+                    #         if sell_volume > 0:
+                    #             orders[symbol] = [Order(symbol, sell_price, -sell_volume)]
+                    #             Portfolio[symbol] = -sell_volume
+                    # elif positions[symbol] < 0:
+                    #     if self.state.order_depths[symbol].sell_orders:
+                    #         buy_price = min(self.state.order_depths[symbol].sell_orders.keys())
+                    #         volume = abs(self.state.order_depths[symbol].sell_orders[buy_price])
+                            
+                    #         buy_volume = min(volume, self.voucher_limit - positions[symbol])
+                    #         if buy_volume > 0:
+                    #             orders[symbol] = [Order(symbol, buy_price, buy_volume)]
+                    #             Portfolio[symbol] = buy_volume        
+                elif residuals[i] < -res[i]:    #and symbol == "VOLCANIC_ROCK_VOUCHER_10000":
                     
-                    buy_volume = min(volume, self.voucher_limit - positions[symbol])
-                    logger.print(symbol, f"Volume: {buy_volume}", f"Position: {positions[symbol]}")
-                ## Trade first voucher volume
-                    if buy_volume > 0:
-                        orders[symbol] = [Order(symbol, buy_price, buy_volume)]
-                        Portfolio[symbol] = buy_volume
-                        
-                else:
-                    orders = {}
-                    break
-                    
-                    
-            elif residuals[i] > res:# and symbol == "VOLCANIC_ROCK_VOUCHER_10000":
-                if self.state.order_depths[symbol].buy_orders:
-
-                    sell_price = max(self.state.order_depths[symbol].buy_orders.keys())
-                    volume = abs(self.state.order_depths[symbol].buy_orders[sell_price])
-                    sell_volume = min(volume, self.voucher_limit + positions[symbol])
-                    logger.print(symbol, f"Volume: {sell_volume}", f"Position: {positions[symbol]}")
-                    if sell_volume > 0:
-                        orders[symbol] = [Order(symbol, sell_price, -sell_volume)]
-                        Portfolio[symbol] = -sell_volume
-                else:
-                    orders = {}
-                    break
-            elif residuals[i] < exit:
-                if positions[symbol] < 0:
                     if self.state.order_depths[symbol].sell_orders:
                         buy_price = min(self.state.order_depths[symbol].sell_orders.keys())
                         volume = abs(self.state.order_depths[symbol].sell_orders[buy_price])
-                    
+                        
                         buy_volume = min(volume, self.voucher_limit - positions[symbol])
                         logger.print(symbol, f"Volume: {buy_volume}", f"Position: {positions[symbol]}")
-                ## Trade first voucher volume
-                    if buy_volume > 0:
-                        orders[symbol] = [Order(symbol, buy_price, buy_volume)]
-                        Portfolio[symbol] = buy_volume
-            elif residuals[i] > -exit:
-                if positions[symbol] > 0:
+                    ## Trade first voucher volume
+                        if buy_volume > 0:
+                            orders[symbol] = [Order(symbol, buy_price, buy_volume)]
+                            Portfolio[symbol] = buy_volume
+                            
+                    else:
+                        orders = {}
+                        break
+                        
+                        
+                elif residuals[i] > res[i]: # and symbol == "VOLCANIC_ROCK_VOUCHER_10000":
                     if self.state.order_depths[symbol].buy_orders:
+
                         sell_price = max(self.state.order_depths[symbol].buy_orders.keys())
                         volume = abs(self.state.order_depths[symbol].buy_orders[sell_price])
-                        
                         sell_volume = min(volume, self.voucher_limit + positions[symbol])
                         logger.print(symbol, f"Volume: {sell_volume}", f"Position: {positions[symbol]}")
                         if sell_volume > 0:
                             orders[symbol] = [Order(symbol, sell_price, -sell_volume)]
                             Portfolio[symbol] = -sell_volume
+                    else:
+                        orders = {}
+                        break
+                elif residuals[i] < exit[i]:
+                    if positions[symbol] < 0:
+                        if self.state.order_depths[symbol].sell_orders:
+                            buy_price = min(self.state.order_depths[symbol].sell_orders.keys())
+                            volume = abs(self.state.order_depths[symbol].sell_orders[buy_price])
+                        
+                            buy_volume = min(volume, self.voucher_limit - positions[symbol])
+                            logger.print(symbol, f"Volume: {buy_volume}", f"Position: {positions[symbol]}")
+                    ## Trade first voucher volume
+                        if buy_volume > 0:
+                            orders[symbol] = [Order(symbol, buy_price, buy_volume)]
+                            Portfolio[symbol] = buy_volume
+                elif residuals[i] > -exit[i]:
+                    if positions[symbol] > 0:
+                        if self.state.order_depths[symbol].buy_orders:
+                            sell_price = max(self.state.order_depths[symbol].buy_orders.keys())
+                            volume = abs(self.state.order_depths[symbol].buy_orders[sell_price])
+                            
+                            sell_volume = min(volume, self.voucher_limit + positions[symbol])
+                            logger.print(symbol, f"Volume: {sell_volume}", f"Position: {positions[symbol]}")
+                            if sell_volume > 0:
+                                orders[symbol] = [Order(symbol, sell_price, -sell_volume)]
+                                Portfolio[symbol] = -sell_volume
 
        
 
@@ -512,7 +567,9 @@ class Rock():
                     sell_price = max(self.state.order_depths["VOLCANIC_ROCK"].buy_orders.keys())
                     orders["VOLCANIC_ROCK"] = [Order("VOLCANIC_ROCK", sell_price+1, -abs(delta_hedge_volume))]         
         
-        return orders
+        return {**exit_orders, **orders}
+
+    
 
 #########################
 
