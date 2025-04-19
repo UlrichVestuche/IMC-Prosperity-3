@@ -26,7 +26,7 @@ len_long1 = 9000
 len_long2 = 9000
 z_max2 =  1.5
 
-STD_SQUID_INK_PREV_DAY = 8.7
+STD_SQUID_INK_PREV_DAY = 14.5
 
 price_spread = {'PICNIC_BASKET1': 2,'PICNIC_BASKET2': 1,'CROISSANTS': 2,'JAMS': 1,'DJEMBES': 1}
 price_max_pb1 = 4
@@ -279,23 +279,23 @@ class Rock():
         y_points = [IV_dict[symbol + "_IV"] for symbol in self.voucher_strikes.keys()]
 
         if any(abs(v) <= 0.7* 10**-5 for v in y_points):
-            logger.print("Skipping points with low IV")
+            ##logger.print("Skipping points with low IV")
             return None, None
 
         time_window = 100
 
 
         # if (0 in y_points) or (10**-7 in y_points):
-        #     logger.print("Skipping parabola fit due to invalid IV point(s)")
+        #     ##logger.print("Skipping parabola fit due to invalid IV point(s)")
         # else:
         #     coeffs= self.fit_iv_parabola(x_points, y_points) 
         #     a = coeffs[0]
         #     b = coeffs[1]
         #     c = coeffs[2]
         #     center = -b / (2 * a) if a != 0 else None
-        #     logger.print("Parabola fit: a =", a, ", center =", center, 'Volatility at center:', a*center**2 + b*center + c, 'Residuals:', residuals)
+        #     ##logger.print("Parabola fit: a =", a, ", center =", center, 'Volatility at center:', a*center**2 + b*center + c, 'Residuals:', residuals)
         #     residuals = ((y_points - np.polyval(coeffs, x_points)) / y_points).tolist()
-        #     logger.print("Residuals:", residuals)
+        #     ##logger.print("Residuals:", residuals)
 
 
 
@@ -313,7 +313,7 @@ class Rock():
             b = coeffs[1]
             c = coeffs[2]
             center = -b / (2 * a) if a != 0 else None
-            logger.print("Parabola fit: a =", a, ", center =", center, 'Volatility at center:', a * center**2 + b * center + c)
+            ##logger.print("Parabola fit: a =", a, ", center =", center, 'Volatility at center:', a * center**2 + b * center + c)
             traderData['parabola_coeffs'] = coeffs.tolist()
 
             traderData['parabola_x'] = x_points
@@ -326,12 +326,12 @@ class Rock():
             x_arr = np.array(x_points)
             y_arr = np.array(y_points)
             residuals = ((y_arr - np.polyval(traderData['parabola_coeffs'], x_arr)) / y_arr).tolist()
-            logger.print("Residuals:", residuals)
+            ##logger.print("Residuals:", residuals)
         else:
             residuals = None
-        # logger.print(x_points, y_points)
-        # logger.print(traderData['parabola_x'])
-        # logger.print(traderData['parabola_y'])
+        # ##logger.print(x_points, y_points)
+        # ##logger.print(traderData['parabola_x'])
+        # ##logger.print(traderData['parabola_y'])
         
         return IV_dict, residuals
     # Insert the following new method in the Rock class (for example, just before the IV method):
@@ -341,7 +341,7 @@ class Rock():
         
         # Skip the fit if any y point is 0 or too close to 0 (as before)
         if (0 in y_points) or (10**-7 in y_points):
-            logger.print("Skipping parabola fit due to invalid IV point(s)")
+            ##logger.print("Skipping parabola fit due to invalid IV point(s)")
             return None
         
         # Construct the design matrix for the model f(x) = a * x^2 + c.
@@ -356,13 +356,13 @@ class Rock():
         # so that f(x) = a*x^2 + 0*x + c.
         return np.array([a, 0.0, c])
     # def fit_iv_parabola(self, x_points, y_points):
-    #     #logger.print(x_points)
-    #     #logger.print(y_points)
+    #     ##logger.print(x_points)
+    #     ##logger.print(y_points)
     #     x_points =  np.array(x_points)
     #     y_points =  np.array(y_points)
         
     #     if (0 in y_points) or (10**-7 in y_points):
-    #         logger.print("Skipping parabola fit due to invalid IV point(s)")
+    #         #logger.print("Skipping parabola fit due to invalid IV point(s)")
     #         return None
     #     coeffs = np.polyfit(x_points, y_points, 2)
     #     return coeffs
@@ -371,7 +371,7 @@ class Rock():
         delta = 0
         for symbol in self.voucher_strikes.keys():
             delta_voucher = BlackScholes.delta(St, self.voucher_strikes[symbol], time_to_expiry, IV_dict[symbol + "_IV"])
-            logger.print('delta_voucher', delta_voucher)
+            #logger.print('delta_voucher', delta_voucher)
             delta += delta_voucher * (positions[symbol]+Portfolio.get(symbol, 0))
         return delta
     
@@ -382,61 +382,54 @@ class Rock():
         delta_hedge_volume = int(delta_hedge)
         return delta_hedge_volume
         
-    def buy_atm_call(self, traderData: dict[str, Any], volume: int = None) -> dict[str, list[Order]]:
-        """
-        Buy an ATM call option voucher and hold it.
-        """
-        # Get current underlying mid price
-        St = self.get_mid_price(self.state.order_depths["VOLCANIC_ROCK"], traderData, "VOLCANIC_ROCK")
-        # Identify ATM strike symbol (closest strike to St)
-        atm_symbol = min(self.voucher_strikes.items(), key=lambda kv: abs(kv[1] - St))[0]
-        # Calculate desired volume: fill up to voucher_limit
-        current_pos = self.state.position.get(atm_symbol, 0)
-        desired = self.voucher_limit - current_pos
-        vol = volume if volume is not None else desired
-        if vol <= 0:
-            return {}
-        # Place buy order at best ask
-        order_depth = self.state.order_depths[atm_symbol]
-        if not order_depth.sell_orders:
-            return {}
-        best_ask = min(order_depth.sell_orders.keys())
-        size = min(vol, order_depth.sell_orders[best_ask])
-             # record entry price for exit logic
-        if 'atm_entry_price' not in traderData:
-            traderData['atm_entry_price'] = best_ask
-        return {atm_symbol: [Order(atm_symbol, best_ask, size)]}
-    def exit_atm_call(self, traderData: dict[str, Any], profit_target: float = 1.5) -> dict[str, list[Order]]:
-        """
-        Exit the ATM call when profit target is reached.
-        """
-        entry = traderData.get('atm_entry_price')
-        # find ATM symbol based on current mid price
-        St = self.get_mid_price(self.state.order_depths["VOLCANIC_ROCK"], traderData, "VOLCANIC_ROCK")
-        atm_symbol = min(self.voucher_strikes.items(), key=lambda kv: abs(kv[1] - St))[0]
-        pos = self.state.position.get(atm_symbol, 0)
-        if entry is None or pos <= 0:
-            return {}
-        order_depth = self.state.order_depths[atm_symbol]
-        if not order_depth.buy_orders:
-            return {}
-        best_bid = max(order_depth.buy_orders.keys())
-        # exit when bid price exceeds target
-        if best_bid >= entry * profit_target:
-            traderData.pop('atm_entry_price', None)
-            return {atm_symbol: [Order(atm_symbol, best_bid, -pos)]}
-        return {}
+    # def buy_atm_call(self, traderData: dict[str, Any], volume: int = None) -> dict[str, list[Order]]:
+    #     """
+    #     Buy an ATM call option voucher and hold it.
+    #     """
+    #     # Get current underlying mid price
+    #     St = self.get_mid_price(self.state.order_depths["VOLCANIC_ROCK"], traderData, "VOLCANIC_ROCK")
+    #     # Identify ATM strike symbol (closest strike to St)
+    #     atm_symbol = min(self.voucher_strikes.items(), key=lambda kv: abs(kv[1] - St))[0]
+    #     # Calculate desired volume: fill up to voucher_limit
+    #     current_pos = self.state.position.get(atm_symbol, 0)
+    #     desired = self.voucher_limit - current_pos
+    #     vol = volume if volume is not None else desired
+    #     if vol <= 0:
+    #         return {}
+    #     # Place buy order at best ask
+    #     order_depth = self.state.order_depths[atm_symbol]
+    #     if not order_depth.sell_orders:
+    #         return {}
+    #     best_ask = min(order_depth.sell_orders.keys())
+    #     size = min(vol, order_depth.sell_orders[best_ask])
+    #          # record entry price for exit logic
+    #     if 'atm_entry_price' not in traderData:
+    #         traderData['atm_entry_price'] = best_ask
+    #     return {atm_symbol: [Order(atm_symbol, best_ask, size)]}
+    # def exit_atm_call(self, traderData: dict[str, Any], profit_target: float = 1.5) -> dict[str, list[Order]]:
+    #     """
+    #     Exit the ATM call when profit target is reached.
+    #     """
+    #     entry = traderData.get('atm_entry_price')
+    #     # find ATM symbol based on current mid price
+    #     St = self.get_mid_price(self.state.order_depths["VOLCANIC_ROCK"], traderData, "VOLCANIC_ROCK")
+    #     atm_symbol = min(self.voucher_strikes.items(), key=lambda kv: abs(kv[1] - St))[0]
+    #     pos = self.state.position.get(atm_symbol, 0)
+    #     if entry is None or pos <= 0:
+    #         return {}
+    #     order_depth = self.state.order_depths[atm_symbol]
+    #     if not order_depth.buy_orders:
+    #         return {}
+    #     best_bid = max(order_depth.buy_orders.keys())
+    #     # exit when bid price exceeds target
+    #     if best_bid >= entry * profit_target:
+    #         traderData.pop('atm_entry_price', None)
+    #         return {atm_symbol: [Order(atm_symbol, best_bid, -pos)]}
+    #     return {}
     def rock_orders(self, traderData: dict[str, Any]):
-        # check ATM exit first
-        exit_orders = {}
-        
-        # exit_orders = self.exit_atm_call(traderData)
-        # if exit_orders:
-        #     return exit_orders
-        
         soft_limit = 15
-        res = [0.04, 0.04, 0.04, 0.04, 0.04]
-        exit = [0.01, 0.01, 0.01, 0.01, 0.01]
+        res = 0.04
+        exit = 0.01
 
         delta_upper_limit = 0.9
         delta_lower_limit = 0.1
@@ -447,98 +440,93 @@ class Rock():
             
         IV_dict, residuals = self.IV(traderData)
         orders = {}
-        orders = self.buy_atm_call(traderData)
-
         if traderData.get('parabola_coeffs', None) is not None:
             logger.print(traderData['parabola_coeffs'])
         if residuals is None:
-            return exit_orders
-        
+            return {}
         Portfolio = {}
         St = self.get_mid_price(self.state.order_depths["VOLCANIC_ROCK"], traderData, "VOLCANIC_ROCK")
         time_day = 10000 * 100 
         T = 7 * time_day
         time_to_expiry = T - 10000 * 100 * current_day - self.state.timestamp
 
-        Z_trade = True
-        if Z_trade:
-            for i, symbol in enumerate(self.voucher_strikes.keys()):
-                if IV_dict is not None:
-                    delta_voucher = BlackScholes.delta(St, self.voucher_strikes[symbol], time_to_expiry, IV_dict[symbol + "_IV"])
-                if IV_dict is not None and (delta_voucher < delta_lower_limit or delta_voucher > delta_upper_limit):
-                    non_trade = True
-                    # if positions[symbol] > 0:
-                    #     if self.state.order_depths[symbol].buy_orders:
-                    #         sell_price = max(self.state.order_depths[symbol].buy_orders.keys())
-                    #         volume = abs(self.state.order_depths[symbol].buy_orders[sell_price])
-                            
-                    #         sell_volume = min(volume, self.voucher_limit + positions[symbol])
-                    #         if sell_volume > 0:
-                    #             orders[symbol] = [Order(symbol, sell_price, -sell_volume)]
-                    #             Portfolio[symbol] = -sell_volume
-                    # elif positions[symbol] < 0:
-                    #     if self.state.order_depths[symbol].sell_orders:
-                    #         buy_price = min(self.state.order_depths[symbol].sell_orders.keys())
-                    #         volume = abs(self.state.order_depths[symbol].sell_orders[buy_price])
-                            
-                    #         buy_volume = min(volume, self.voucher_limit - positions[symbol])
-                    #         if buy_volume > 0:
-                    #             orders[symbol] = [Order(symbol, buy_price, buy_volume)]
-                    #             Portfolio[symbol] = buy_volume        
-                elif residuals[i] < -res[i]:    #and symbol == "VOLCANIC_ROCK_VOUCHER_10000":
+        for i, symbol in enumerate(self.voucher_strikes.keys()):
+            if IV_dict is not None:
+                delta_voucher = BlackScholes.delta(St, self.voucher_strikes[symbol], time_to_expiry, IV_dict[symbol + "_IV"])
+            if IV_dict is not None and (delta_voucher < delta_lower_limit or delta_voucher > delta_upper_limit):
+                non_trade = True
+                # if positions[symbol] > 0:
+                #     if self.state.order_depths[symbol].buy_orders:
+                #         sell_price = max(self.state.order_depths[symbol].buy_orders.keys())
+                #         volume = abs(self.state.order_depths[symbol].buy_orders[sell_price])
+                        
+                #         sell_volume = min(volume, self.voucher_limit + positions[symbol])
+                #         if sell_volume > 0:
+                #             orders[symbol] = [Order(symbol, sell_price, -sell_volume)]
+                #             Portfolio[symbol] = -sell_volume
+                # elif positions[symbol] < 0:
+                #     if self.state.order_depths[symbol].sell_orders:
+                #         buy_price = min(self.state.order_depths[symbol].sell_orders.keys())
+                #         volume = abs(self.state.order_depths[symbol].sell_orders[buy_price])
+                        
+                #         buy_volume = min(volume, self.voucher_limit - positions[symbol])
+                #         if buy_volume > 0:
+                #             orders[symbol] = [Order(symbol, buy_price, buy_volume)]
+                #             Portfolio[symbol] = buy_volume        
+            elif residuals[i] < -res: #and symbol == "VOLCANIC_ROCK_VOUCHER_10000":
+                
+                if self.state.order_depths[symbol].sell_orders:
+                    buy_price = min(self.state.order_depths[symbol].sell_orders.keys())
+                    volume = abs(self.state.order_depths[symbol].sell_orders[buy_price])
                     
+                    buy_volume = min(volume, self.voucher_limit - positions[symbol])
+                    logger.print(symbol, f"Volume: {buy_volume}", f"Position: {positions[symbol]}")
+                ## Trade first voucher volume
+                    if buy_volume > 0:
+                        orders[symbol] = [Order(symbol, buy_price, buy_volume)]
+                        Portfolio[symbol] = buy_volume
+                        
+                else:
+                    orders = {}
+                    break
+                    
+                    
+            elif residuals[i] > res:# and symbol == "VOLCANIC_ROCK_VOUCHER_10000":
+                if self.state.order_depths[symbol].buy_orders:
+
+                    sell_price = max(self.state.order_depths[symbol].buy_orders.keys())
+                    volume = abs(self.state.order_depths[symbol].buy_orders[sell_price])
+                    sell_volume = min(volume, self.voucher_limit + positions[symbol])
+                    logger.print(symbol, f"Volume: {sell_volume}", f"Position: {positions[symbol]}")
+                    if sell_volume > 0:
+                        orders[symbol] = [Order(symbol, sell_price, -sell_volume)]
+                        Portfolio[symbol] = -sell_volume
+                else:
+                    orders = {}
+                    break
+            elif residuals[i] < exit:
+                if positions[symbol] < 0:
                     if self.state.order_depths[symbol].sell_orders:
                         buy_price = min(self.state.order_depths[symbol].sell_orders.keys())
                         volume = abs(self.state.order_depths[symbol].sell_orders[buy_price])
-                        
+                    
                         buy_volume = min(volume, self.voucher_limit - positions[symbol])
                         logger.print(symbol, f"Volume: {buy_volume}", f"Position: {positions[symbol]}")
-                    ## Trade first voucher volume
-                        if buy_volume > 0:
-                            orders[symbol] = [Order(symbol, buy_price, buy_volume)]
-                            Portfolio[symbol] = buy_volume
-                            
-                    else:
-                        orders = {}
-                        break
-                        
-                        
-                elif residuals[i] > res[i]: # and symbol == "VOLCANIC_ROCK_VOUCHER_10000":
+                ## Trade first voucher volume
+                    if buy_volume > 0:
+                        orders[symbol] = [Order(symbol, buy_price, buy_volume)]
+                        Portfolio[symbol] = buy_volume
+            elif residuals[i] > -exit:
+                if positions[symbol] > 0:
                     if self.state.order_depths[symbol].buy_orders:
-
                         sell_price = max(self.state.order_depths[symbol].buy_orders.keys())
                         volume = abs(self.state.order_depths[symbol].buy_orders[sell_price])
+                        
                         sell_volume = min(volume, self.voucher_limit + positions[symbol])
                         logger.print(symbol, f"Volume: {sell_volume}", f"Position: {positions[symbol]}")
                         if sell_volume > 0:
                             orders[symbol] = [Order(symbol, sell_price, -sell_volume)]
                             Portfolio[symbol] = -sell_volume
-                    else:
-                        orders = {}
-                        break
-                elif residuals[i] < exit[i]:
-                    if positions[symbol] < 0:
-                        if self.state.order_depths[symbol].sell_orders:
-                            buy_price = min(self.state.order_depths[symbol].sell_orders.keys())
-                            volume = abs(self.state.order_depths[symbol].sell_orders[buy_price])
-                        
-                            buy_volume = min(volume, self.voucher_limit - positions[symbol])
-                            logger.print(symbol, f"Volume: {buy_volume}", f"Position: {positions[symbol]}")
-                    ## Trade first voucher volume
-                        if buy_volume > 0:
-                            orders[symbol] = [Order(symbol, buy_price, buy_volume)]
-                            Portfolio[symbol] = buy_volume
-                elif residuals[i] > -exit[i]:
-                    if positions[symbol] > 0:
-                        if self.state.order_depths[symbol].buy_orders:
-                            sell_price = max(self.state.order_depths[symbol].buy_orders.keys())
-                            volume = abs(self.state.order_depths[symbol].buy_orders[sell_price])
-                            
-                            sell_volume = min(volume, self.voucher_limit + positions[symbol])
-                            logger.print(symbol, f"Volume: {sell_volume}", f"Position: {positions[symbol]}")
-                            if sell_volume > 0:
-                                orders[symbol] = [Order(symbol, sell_price, -sell_volume)]
-                                Portfolio[symbol] = -sell_volume
 
        
 
@@ -567,8 +555,7 @@ class Rock():
                     sell_price = max(self.state.order_depths["VOLCANIC_ROCK"].buy_orders.keys())
                     orders["VOLCANIC_ROCK"] = [Order("VOLCANIC_ROCK", sell_price+1, -abs(delta_hedge_volume))]         
         
-        return {**exit_orders, **orders}
-
+        return orders
     
 
 #########################
@@ -590,9 +577,9 @@ class Macarons():
     def trends(self, order_depth: OrderDepth, observation: ConversionObservation, traderObject: dict):
         orders =[]
         conversion = 0
-        band = 65
+        band = 60
         average = 640
-        derivative_threshold = 0.1
+        derivative_threshold = 0.05
 
        
 
@@ -609,7 +596,8 @@ class Macarons():
             traderObject['SunlightIndex10'].pop(0)
         
        
-
+        if not traderObject.get('Macarons_Clear', 0):
+            traderObject['Macarons_Clear'] = 0
         if len(traderObject.get('SunlightIndex10', [])) == 10:
             traderObject['SunlightIndex10_trend'] = traderObject['SunlightIndex10'][-1] - traderObject['SunlightIndex10'][0]
             
@@ -619,7 +607,7 @@ class Macarons():
             if traderObject.get('current_position_Macarons', None) is None:
                 traderObject['current_position_Macarons'] = 'arb_make'
             current_position = traderObject['current_position_Macarons']
-
+            #logger.print()
             if observation.sunlightIndex is not None:
                 if observation.sunlightIndex > 50:
                     if (self.mid_price(order_depth) - average) > band:
@@ -629,10 +617,18 @@ class Macarons():
 
                         sell_volume = self.position_limit + self.position
                         orders.append(Order("MAGNIFICENT_MACARONS", int(fair_ask), -sell_volume))
+                        traderObject['current_position_Macarons'] = 'arb_make' 
+                        traderObject['Macarons_Clear'] = 7
                             #self.position += sell_volume
-                    elif (self.mid_price( order_depth) - average) < -band:
+                    elif (self.mid_price( order_depth) - average) < -band and traderObject.get('Macarons_Clear', 0) >0:
+
                         current_position ='arb_make'
                     #elif self.mid_price( order_depth) < average - band:
+                        conversion = min(abs(self.position), 10)
+                        traderObject['Macarons_Clear'] -= 1
+
+                        # arb_orders, conversion = self.arb_make(order_depth, observation)
+                        # orders.extend(arb_orders)
                     elif current_position == 'arb_make':
                         arb_orders, conversion = self.arb_make(order_depth, observation)
                         orders.extend(arb_orders)
@@ -671,7 +667,7 @@ class Macarons():
         # Determine the best ask available (baaf) that is above the fair value plus spread, or default to fair value if none exists
 
         sell_book = [price for price in order_depth.sell_orders.keys() if price >= ask_price + spread]
-        if sell_book:
+        if len(sell_book)>1:
             baaf = min(sell_book)
         else:
             baaf = ask_price
@@ -691,16 +687,21 @@ class Macarons():
         #sell_quantity = self.position_limit + (position - self.sell_order_volume)
 
         # limit = self.conversion_limit
-        limit = 20
-        sell_quantity = min(self.position_limit + self.position, abs(15-self.position))
+        # limit = 30
+        # if abs(self.position)> limit:
+        #     sell_quantity =  min(self.position_limit + self.position, 0)
+        # else:
+        #     
+        sell_quantity = min(self.position_limit + self.position, 20)
+        #sell_quantity = min(self.position_limit + self.position, abs(30+self.position))
         if sell_quantity > 0:
         
             #orders.append(Order("MAGNIFICENT_MACARONS", baaf - insert, -sell_quantity))
             orders.append(Order("MAGNIFICENT_MACARONS", math.ceil(ask_price), -sell_quantity))
             #orders.append(Order("MAGNIFICENT_MACARONS", math.ceil(ask_price+1), -sell_quantity))
-        logger.print('sell quantity:',sell_quantity,'trying to sell:',baaf, 'try to buy:',ask_price)
+        #logger.print('sell quantity:',sell_quantity,'trying to sell:',baaf, 'try to buy:',ask_price)
 
-        might_convert = abs(self.position - sell_quantity)
+
         return orders, min(self.conversion_limit, abs(self.position))
     
     def order(self, order_depth: OrderDepth, observation: ConversionObservation, traderObject: dict):
@@ -798,7 +799,7 @@ class Trader:
                     self.order_depth.sell_orders[best_ask] += quantity
                     if self.order_depth.sell_orders[best_ask] == 0:
                            del self.order_depth.sell_orders[best_ask]
-                    logger.print('I found good buy price:', best_ask, "fair:",self.fair_value, 'quantity:', quantity)
+                    #logger.print('I found good buy price:', best_ask, "fair:",self.fair_value, 'quantity:', quantity)
         # Process buy orders: evaluate if the best bid is favorable
         if len(self.order_depth.buy_orders) != 0:
             best_bid = max(self.order_depth.buy_orders.keys())
@@ -815,7 +816,7 @@ class Trader:
                     self.order_depth.buy_orders[best_bid] -= quantity
                     if self.order_depth.buy_orders[best_bid] == 0:
                            del self.order_depth.buy_orders[best_bid]
-                    logger.print('I found good sell price:', best_bid, "fair:", self.fair_value, 'quantity:', quantity)
+                    #logger.print('I found good sell price:', best_bid, "fair:", self.fair_value, 'quantity:', quantity)
         
 
     def clear_position_order(self, orders: List[Order]) -> None:
@@ -858,7 +859,7 @@ class Trader:
                 orders.append(Order(self.product, fair_for_ask, -abs(sent_quantity)))
                 self.sell_order_volume += abs(sent_quantity)
                 
-            logger.print('I tried clearing-selling:',sent_quantity,'with this price : ', fair_for_ask)
+            #logger.print('I tried clearing-selling:',sent_quantity,'with this price : ', fair_for_ask)
 
         if position_after_take < 0:
             #Aggregate volume from all sell orders with price lower than fair_for_bid
@@ -873,7 +874,7 @@ class Trader:
             if sent_quantity > 0:
                 orders.append(Order(self.product, fair_for_bid, abs(sent_quantity)))
                 self.buy_order_volume += abs(sent_quantity)
-            logger.print('I tried clearing-buying:', sent_quantity,'with this price : ', fair_for_bid)
+            #logger.print('I tried clearing-buying:', sent_quantity,'with this price : ', fair_for_bid)
 
         
 
@@ -925,7 +926,7 @@ class Trader:
             traderObject["kelp_last_price"] = mmmid_price
             traderObject['fair_value'] = fair
 
-            #logger.print(fair)
+            ##logger.print(fair)
             return fair
        
         return None
@@ -1021,10 +1022,10 @@ class Trader:
 
         if buy_quantity > 0:
             orders.append(Order("KELP", bid, buy_quantity))
-            logger.print('Trying to market make with bid:', bid,"buy quantity:", buy_quantity)
+            #logger.print('Trying to market make with bid:', bid,"buy quantity:", buy_quantity)
         if sell_quantity > 0:
             orders.append(Order("KELP", ask, -sell_quantity))
-            logger.print('Trying to market make with sell:', ask,"sell quantity:", sell_quantity)
+            #logger.print('Trying to market make with sell:', ask,"sell quantity:", sell_quantity)
         return orders
     
 
@@ -1106,7 +1107,7 @@ class Trader:
         orders: List[Order] = []
         
         # Initialize volatility standard deviation if not already defined in traderObject
-        logger.print('price_dif:', self.price_dif, 'std:', self.std)
+        #logger.print('price_dif:', self.price_dif, 'std:', self.std)
         Z_score = self.price_dif / self.std
         
 
@@ -1131,20 +1132,20 @@ class Trader:
 
         if Z_score > 1.2 and self.position >-35:
             orders.append(Order("SQUID_INK", math.ceil(self.fair_value) , -15))
-            logger.print('Trying to market make with sell:',mm_bid, "sell quantity:", 15)
+            #logger.print('Trying to market make with sell:',mm_bid, "sell quantity:", 15)
         elif Z_score < -1.2 and self.position <35:
             orders.append(Order("SQUID_INK", math.floor(self.fair_value), +15))
-            logger.print('Trying to market make with buy:', mm_ask, "buy quantity:", 15)
+            #logger.print('Trying to market make with buy:', mm_ask, "buy quantity:", 15)
         # if self.position >= -1 and Z_score > 1.5:
         #     orders.append(Order("SQUID_INK", mm_bid, -30))
-        #     logger.print('Trying to market make with sell:',mm_bid, "sell quantity:", 20)
+        #     #logger.print('Trying to market make with sell:',mm_bid, "sell quantity:", 20)
         # elif self.position <= 1 and Z_score < -1.5:
         #     orders.append(Order("SQUID_INK", mm_ask, +30))
-        #     logger.print('Trying to market make with buy:', mm_ask, "buy quantity:", 20)
+        #     #logger.print('Trying to market make with buy:', mm_ask, "buy quantity:", 20)
         
         
       
-        logger.print('Z_score:', Z_score)
+        #logger.print('Z_score:', Z_score)
         return orders
         
         
@@ -1489,79 +1490,79 @@ class Trader:
 
        
     
-        # PB_dict = {}
-        # # Check if RAINFOREST_RESIN is available in the current market data
-        # if "RAINFOREST_RESIN" in state.order_depths:
-        #     # # Get current position for RAINFOREST_RESIN, defaulting to 0 if not present
-        #     # resin_position = state.position["RAINFOREST_RESIN"] if "RAINFOREST_RESIN" in state.position else 0
-        #     # # # Set up the trading context with the latest market data and parameters
-        #     # self.set_context(state.order_depths["RAINFOREST_RESIN"], 10000, 2, resin_position, 50, "RAINFOREST_RESIN")
-        #     # # # Generate trading orders for RAINFOREST_RESIN
-        #     # resin_orders = self.resin_orders()
-        #     # result["RAINFOREST_RESIN"] = resin_orders
-        #     result["RAINFOREST_RESIN"] = self.resin_ord(state) 
+        PB_dict = {}
+        # Check if RAINFOREST_RESIN is available in the current market data
+        if "RAINFOREST_RESIN" in state.order_depths:
+            # # Get current position for RAINFOREST_RESIN, defaulting to 0 if not present
+            # resin_position = state.position["RAINFOREST_RESIN"] if "RAINFOREST_RESIN" in state.position else 0
+            # # # Set up the trading context with the latest market data and parameters
+            # self.set_context(state.order_depths["RAINFOREST_RESIN"], 10000, 2, resin_position, 50, "RAINFOREST_RESIN")
+            # # # Generate trading orders for RAINFOREST_RESIN
+            # resin_orders = self.resin_orders()
+            # result["RAINFOREST_RESIN"] = resin_orders
+            result["RAINFOREST_RESIN"] = self.resin_ord(state) 
 
 
-        # if "KELP" in state.order_depths:
-        #     kelp_position = state.position["KELP"] if "KELP" in state.position else 0
-        #     # Calculate fair price for KELP using the new function
-        #     fair_value_for_kelp = self.kelp_fair_value(state.order_depths["KELP"], traderObject)
-        #     self.set_context(state.order_depths["KELP"], fair_value_for_kelp, 2, kelp_position, 50, 'KELP')
-        #     kelp_orders = self.kelp_orders()
-        #     result["KELP"] = kelp_orders
+        if "KELP" in state.order_depths:
+            kelp_position = state.position["KELP"] if "KELP" in state.position else 0
+            # Calculate fair price for KELP using the new function
+            fair_value_for_kelp = self.kelp_fair_value(state.order_depths["KELP"], traderObject)
+            self.set_context(state.order_depths["KELP"], fair_value_for_kelp, 2, kelp_position, 50, 'KELP')
+            kelp_orders = self.kelp_orders()
+            result["KELP"] = kelp_orders
         
-        # if "SQUID_INK" in state.order_depths:
+        if "SQUID_INK" in state.order_depths:
             
-        #     squid_ink_position = state.position["SQUID_INK"] if "SQUID_INK" in state.position else 0
-        #     # Calculate fair price for SQUID_INK using the new function
-        #     last_price = traderObject["squid_ink_last_price"] if traderObject.get("squid_ink_last_price", None) is not None else None
-        #     fair_value_for_squid_ink = self.squid_ink_fair_value(state.order_depths["SQUID_INK"], traderObject)
-        #     self.set_context(state.order_depths["SQUID_INK"], fair_value_for_squid_ink, 2, squid_ink_position, 50, 'SQUID_INK')
-        #     squid_ink_orders = self.ink_orders()
+            squid_ink_position = state.position["SQUID_INK"] if "SQUID_INK" in state.position else 0
+            # Calculate fair price for SQUID_INK using the new function
+            last_price = traderObject["squid_ink_last_price"] if traderObject.get("squid_ink_last_price", None) is not None else None
+            fair_value_for_squid_ink = self.squid_ink_fair_value(state.order_depths["SQUID_INK"], traderObject)
+            self.set_context(state.order_depths["SQUID_INK"], fair_value_for_squid_ink, 2, squid_ink_position, 50, 'SQUID_INK')
+            squid_ink_orders = self.ink_orders()
             
-        #     result["SQUID_INK"] = squid_ink_orders 
-        #     # if state.timestamp < 5000:
-        #     #     result["SQUID_INK"] = []
+            result["SQUID_INK"] = squid_ink_orders 
+            # if state.timestamp < 5000:
+            #     result["SQUID_INK"] = []
 
-        # if "PICNIC_BASKET2" in state.order_depths:
-        #     # if state.timestamp > 5000:
+        if "PICNIC_BASKET2" in state.order_depths:
+            # if state.timestamp > 5000:
 
-        #     PB_dict = self.pb_ord(state, traderObject)
+            PB_dict = self.pb_ord(state, traderObject)
 
-        #     result["PICNIC_BASKET1"] = PB_dict['pb1']
-        #     result["PICNIC_BASKET2"] = PB_dict['pb2']
-        #     result["CROISSANTS"] = PB_dict['cro']
-        #     result["JAMS"] = PB_dict['jam']
-        #     result["DJEMBES"] = PB_dict['djem']
+            result["PICNIC_BASKET1"] = PB_dict['pb1']
+            result["PICNIC_BASKET2"] = PB_dict['pb2']
+            result["CROISSANTS"] = PB_dict['cro']
+            result["JAMS"] = PB_dict['jam']
+            result["DJEMBES"] = PB_dict['djem']
 
-        #     logger.print(PB_dict['pb2'])
+            #logger.print(PB_dict['pb2'])
         
 
-        # if "VOLCANIC_ROCK_VOUCHER_9500" in state.order_depths:
-        #     rock = Rock(state=state)
-        #     rock_vouchers = rock.rock_orders(traderObject)
-        #     logger.print(rock_vouchers)
-        #     if rock_vouchers.get("VOLCANIC_ROCK_VOUCHER_9500", None) is not None:
-        #         result["VOLCANIC_ROCK_VOUCHER_9500"] = rock_vouchers["VOLCANIC_ROCK_VOUCHER_9500"]
-        #     if rock_vouchers.get("VOLCANIC_ROCK_VOUCHER_9750", None) is not None:
-        #         result["VOLCANIC_ROCK_VOUCHER_9750"] = rock_vouchers["VOLCANIC_ROCK_VOUCHER_9750"]
-        #     if rock_vouchers.get("VOLCANIC_ROCK_VOUCHER_10000", None) is not None:
-        #         result["VOLCANIC_ROCK_VOUCHER_10000"] = rock_vouchers["VOLCANIC_ROCK_VOUCHER_10000"]
-        #     if rock_vouchers.get("VOLCANIC_ROCK_VOUCHER_10250", None) is not None:
-        #         result["VOLCANIC_ROCK_VOUCHER_10250"] = rock_vouchers["VOLCANIC_ROCK_VOUCHER_10250"]
-        #     if rock_vouchers.get("VOLCANIC_ROCK_VOUCHER_10500", None) is not None:
-        #         result["VOLCANIC_ROCK_VOUCHER_10500"] = rock_vouchers["VOLCANIC_ROCK_VOUCHER_10500"]
-        #     if rock_vouchers.get("VOLCANIC_ROCK", None) is not None:
-        #         result["VOLCANIC_ROCK"] = rock_vouchers["VOLCANIC_ROCK"]
-        # if "MAGNIFICENT_MACARONS" in state.order_depths:
-        position = state.position.get("MAGNIFICENT_MACARONS", 0)
-        macarons = Macarons(position)
-        conv_obs = state.observations.conversionObservations["MAGNIFICENT_MACARONS"]
-        orders, conversions = macarons.order(state.order_depths["MAGNIFICENT_MACARONS"], conv_obs, traderObject)
-        result["MAGNIFICENT_MACARONS"] = orders
+        if "VOLCANIC_ROCK_VOUCHER_9500" in state.order_depths:
+            rock = Rock(state=state)
+            rock_vouchers = rock.rock_orders(traderObject)
+            ##logger.print(rock_vouchers)
+            if rock_vouchers.get("VOLCANIC_ROCK_VOUCHER_9500", None) is not None:
+                result["VOLCANIC_ROCK_VOUCHER_9500"] = rock_vouchers["VOLCANIC_ROCK_VOUCHER_9500"]
+            if rock_vouchers.get("VOLCANIC_ROCK_VOUCHER_9750", None) is not None:
+                result["VOLCANIC_ROCK_VOUCHER_9750"] = rock_vouchers["VOLCANIC_ROCK_VOUCHER_9750"]
+            if rock_vouchers.get("VOLCANIC_ROCK_VOUCHER_10000", None) is not None:
+                result["VOLCANIC_ROCK_VOUCHER_10000"] = rock_vouchers["VOLCANIC_ROCK_VOUCHER_10000"]
+            if rock_vouchers.get("VOLCANIC_ROCK_VOUCHER_10250", None) is not None:
+                result["VOLCANIC_ROCK_VOUCHER_10250"] = rock_vouchers["VOLCANIC_ROCK_VOUCHER_10250"]
+            if rock_vouchers.get("VOLCANIC_ROCK_VOUCHER_10500", None) is not None:
+                result["VOLCANIC_ROCK_VOUCHER_10500"] = rock_vouchers["VOLCANIC_ROCK_VOUCHER_10500"]
+            if rock_vouchers.get("VOLCANIC_ROCK", None) is not None:
+                result["VOLCANIC_ROCK"] = rock_vouchers["VOLCANIC_ROCK"]
+        if "MAGNIFICENT_MACARONS" in state.order_depths:
+            position = state.position.get("MAGNIFICENT_MACARONS", 0)
+            macarons = Macarons(position)
+            conv_obs = state.observations.conversionObservations["MAGNIFICENT_MACARONS"]
+            orders, conversions = macarons.order(state.order_depths["MAGNIFICENT_MACARONS"], conv_obs, traderObject)
+            result["MAGNIFICENT_MACARONS"] = orders
 
         #traderData = jsonpickle.encode(PB_dict['Dict_Spreads'])
-        # logger.print("position:",self.position)
+        # ##logger.print("position:",self.position)
         # traderData and conversions could be used for logging or further processing
         
         traderData = jsonpickle.encode(traderObject)
